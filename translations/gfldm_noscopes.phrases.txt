@@ -1,0 +1,20 @@
+"Phrases"
+{
+    "Headshot noscoped"
+    {
+        "#format"       "{1:N},{2:N},{3:.2f}"
+        "en"            "{normal}[{green}NoScope{normal}] {teamcolor[2]}{1} {normal}noscoped {teamcolor[3]}{2} {normal}[{green}HS{normal}] from {green}{3}m {normal}away."
+    }
+
+    "Noscoped"
+    {
+        "#format"       "{1:N},{2:N},{3:.2f}"
+        "en"            "{normal}[{green}NoScope{normal}] {teamcolor[2]}{1} {normal}noscoped {teamcolor[3]}{2} {normal}from {green}{3}m {normal}away."
+    }
+
+    "Total noscopes"
+    {
+        "#format"       "{1:N},{2:d},{3:d}"
+        "en"            "{normal}[{green}NoScope{normal}] {teamcolor[2]}{1} {normal}has {green}{2} {normal}noscopes [{green}{3} HS{normal}]"
+    }
+}
