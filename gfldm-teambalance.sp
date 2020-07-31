@@ -11,7 +11,7 @@ public Plugin myinfo = {
     url = "https://github.com/GFLClan/gfl-dm-pack"
 }
 
-public void OnPluginLoad() {
+public void OnPluginStart() {
     HookEvent("player_death", OnPlayerDeath);
 }
 
@@ -23,9 +23,9 @@ public void OnPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
         int count_ct = GFLDM_GetTeamCount(CS_TEAM_CT);
 
         if (GetClientTeam(victim) == CS_TEAM_T && count_t - count_ct > 1) {
-            ChangeClientTeam(victim, CS_TEAM_CT);
-        } else if (GetClientTeam(victim) == CS_TEAM_T && count_ct - count_t > 1) {
-            ChangeClientTeam(victim, CS_TEAM_T);
+            CS_SwitchTeam(victim, CS_TEAM_CT);
+        } else if (GetClientTeam(victim) == CS_TEAM_CT && count_ct - count_t > 1) {
+            CS_SwitchTeam(victim, CS_TEAM_T);
         }
     }
 }
