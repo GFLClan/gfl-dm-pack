@@ -11,13 +11,15 @@ public Plugin myinfo = {
     description = "Chat helpers",
     version = GFLDM_VERSION, 
     url = "https://github.com/GFLClan/gfl-dm-pack"
-}
+};
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
     CreateNative("GFLDM_PrintToChatAll", native_PrintToChatAll);
+    CreateNative("GFLDM_PrintToChatFilter", native_PrintToChatFilter);
+    CreateNative("GFLDM_PrintToChat", native_PrintToChat);
 }
 
-public int native_PrintToChatAll(Handle myself, int numParams) {
+public int native_PrintToChatAll(Handle caller, int numParams) {
     char buffer[2048];
 
     for (int client = 1; client <= MaxClients; client++) {
@@ -27,29 +29,79 @@ public int native_PrintToChatAll(Handle myself, int numParams) {
             int out_written;
             FormatNativeString(0, 1, 2, sizeof(buffer), out_written, buffer, "");
 
-            char replace_buffer[64];
-            char color_buff[24];
-            for (int c = 1; c < numParams; c++) {
-                Format(replace_buffer, sizeof(replace_buffer), "{teamcolor[%d]}", c);
-                if (StrContains(buffer, replace_buffer) != -1) {
-                    GetTeamColor(GetNativeCellRef(c + 1), color_buff, sizeof(color_buff));
-                    ReplaceString(buffer, sizeof(buffer), replace_buffer, color_buff);
-                }
-            }
-
-            if (StrContains(buffer, "{normal}") != -1) {
-                Color_Normal(color_buff, sizeof(color_buff));
-                ReplaceString(buffer, sizeof(buffer), "{normal}", color_buff);
-            }
-
-            if (StrContains(buffer, "{green}") != -1) {
-                Color_Green(color_buff, sizeof(color_buff));
-                ReplaceString(buffer, sizeof(buffer), "{green}", color_buff);
-            }
-
-            PrintToChat(client, buffer);
+            fmt_print(client, buffer, sizeof(buffer), numParams, 1);
         }
     }
+}
+
+public int native_PrintToChatFilter(Handle caller, int numParams) {
+    char buffer[2048];
+    
+    bool filter_res = false;
+    Function filter_func = GetNativeFunction(1);
+
+    for (int client = 1; client <= MaxClients; client++) {
+        Call_StartFunction(caller, filter_func);
+        Call_PushCell(client);
+        int call_res = Call_Finish(filter_res);
+
+        if (IsClientInGame(client) && call_res == SP_ERROR_NONE && filter_res) {
+            SetGlobalTransTarget(client);
+            
+            int out_written;
+            FormatNativeString(0, 2, 3, sizeof(buffer), out_written, buffer, "");
+
+            fmt_print(client, buffer, sizeof(buffer), numParams, 2);
+        }
+    }
+}
+
+public int native_PrintToChat(Handle caller, int numParams) {
+    int client = GetNativeCell(1);
+    if ((0 < client <= MaxClients) && IsClientInGame(client)) {
+        char buffer[2048];
+        SetGlobalTransTarget(client);
+
+        int out_written;
+        FormatNativeString(0, 2, 3, sizeof(buffer), out_written, buffer, "");
+
+        fmt_print(client, buffer, sizeof(buffer), numParams, 1);
+    }
+}
+
+void fmt_print(int client, char[] buffer, int maxsize, int numParams, int paramOffset) {
+    char replace_buffer[64];
+    char color_buff[24];
+    for (int c = 1; c < numParams; c++) {
+        Format(replace_buffer, sizeof(replace_buffer), "{teamcolor[%d]}", c);
+        if (StrContains(buffer, replace_buffer) != -1) {
+            GetTeamColor(GetNativeCellRef(c + paramOffset), color_buff, sizeof(color_buff));
+            ReplaceString(buffer, maxsize, replace_buffer, color_buff);
+        }
+    }
+
+    if (StrContains(buffer, "{normal}") != -1) {
+        Color_Normal(color_buff, sizeof(color_buff));
+        ReplaceString(buffer, maxsize, "{normal}", color_buff);
+    }
+
+    if (StrContains(buffer, "{green}") != -1) {
+        Color_Green(color_buff, sizeof(color_buff));
+        ReplaceString(buffer, maxsize, "{green}", color_buff);
+    }
+
+    if (StrContains(buffer, "{team_ct}") != -1) {
+        Color_CT(color_buff, sizeof(color_buff));
+        ReplaceString(buffer, maxsize, "{team_ct}", color_buff);
+    }
+
+
+    if (StrContains(buffer, "{team_t}") != -1) {
+        Color_CT(color_buff, sizeof(color_buff));
+        ReplaceString(buffer, maxsize, "{team_t}", color_buff);
+    }
+
+    PrintToChat(client, buffer);
 }
 
 stock void GetTeamColor(int client, char[] color_buff, int maxsize) {
@@ -69,6 +121,7 @@ stock void GetTeamColor(int client, char[] color_buff, int maxsize) {
     }
 }
 
+// TODO: Update these to support CS:GO as well
 stock void Color_Spec(char[] color_buff, int maxsize) {
     strcopy(color_buff, maxsize, "\x07CCCCCC");
 }

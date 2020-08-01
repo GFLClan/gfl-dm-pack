@@ -2,6 +2,7 @@
 
 #include <sourcemod>
 #include <gfldm>
+#include <gfldm-chat>
 
 public Plugin myinfo = {
     name = "GFL DM TeamBalance",
@@ -9,10 +10,12 @@ public Plugin myinfo = {
     description = "Balances teams",
     version = GFLDM_VERSION, 
     url = "https://github.com/GFLClan/gfl-dm-pack"
-}
+};
 
 public void OnPluginStart() {
     HookEvent("player_death", OnPlayerDeath);
+
+    LoadTranslations("gfldm_teambalance.phrases");
 }
 
 public void OnPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
@@ -24,8 +27,10 @@ public void OnPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
 
         if (GetClientTeam(victim) == CS_TEAM_T && count_t - count_ct > 1) {
             CS_SwitchTeam(victim, CS_TEAM_CT);
+            GFLDM_PrintToChat(victim, "%t", "Switched CT");
         } else if (GetClientTeam(victim) == CS_TEAM_CT && count_ct - count_t > 1) {
             CS_SwitchTeam(victim, CS_TEAM_T);
+            GFLDM_PrintToChat(victim, "%t", "Switched T");
         }
     }
 }

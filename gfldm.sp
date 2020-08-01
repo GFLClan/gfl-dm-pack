@@ -14,7 +14,7 @@ public Plugin myinfo = {
 ConVar cvar_remove_physics_ents;
 
 public void OnPluginStart() {
-    cvar_remove_physics_ents = CreateConVar("gfldm_remove_physics_ents", "0", "Remove CPhysicsPropMultiplayer");
+    cvar_remove_physics_ents = CreateConVar("gfldm_remove_physics_ents", "1", "Remove CPhysicsPropMultiplayer");
     CreateConVar("gfldm_version", GFLDM_VERSION, "",  FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY);
 
     HookEvent("round_start", Event_RoundStart);
@@ -41,6 +41,10 @@ void RemovePhysicsProps() {
                 if (GetEdictClassname(c, clsname, sizeof(clsname))) {
                     if (StrEqual(clsname, "prop_physics_multiplayer")) {
                         RemoveEdict(c);
+                    } else {
+                        char model[PLATFORM_MAX_PATH];
+                        GetEntPropString(c, Prop_Data, "m_ModelName", model, sizeof(model));
+                        PrintToServer("%s: %s", clsname, model);
                     }
                 }
             }

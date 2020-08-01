@@ -1,0 +1,12 @@
+"Phrases"
+{
+    "Switched CT"
+    {
+        "en"                "{normal}[{green}Teambalance{normal}] You have been switched to {team_ct}CT {normal}for team balance."
+    }
+
+    "Switched T"
+    {
+        "en"                "{normal}[{green}Teambalance{normal}] You have been switched to {team_t}T {normal}for team balance."
+    }
+}

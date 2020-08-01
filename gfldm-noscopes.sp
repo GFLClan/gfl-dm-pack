@@ -1,7 +1,7 @@
 #pragma semicolon 1
 
 #include <sourcemod>
-#include <morecolors>
+#include <clientprefs>
 #include <gfldm>
 #include <gfldm-chat>
 
@@ -15,14 +15,19 @@ public Plugin myinfo = {
     description = "Announces noscopes",
     version = GFLDM_VERSION, 
     url = "https://github.com/GFLClan/gfl-dm-pack"
-}
+};
 
 GlobalForward fwd_OnNoscope = null;
+bool noscopes_enabled[MAXPLAYERS + 1] = {true, ...};
+Cookie noscopes_cookie;
 
 public void OnPluginStart() {
     if(GetEngineVersion() != Engine_CSGO && GetEngineVersion() != Engine_CSS) {
 		SetFailState("Plugin supports CSS and CS:GO only.");
     }
+
+    noscopes_cookie = new Cookie("GFLDM_Noscopes", "", CookieAccess_Protected);
+    RegConsoleCmd("sm_noscopes", Cmd_Noscopes, "Toggle noscope notifications");
 
     HookEvent("player_death", OnPlayerDeath);
     LoadTranslations("gfldm_noscopes.phrases");
@@ -37,6 +42,35 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public void OnClientConnected(int client) {
     noscopes[client] = 0;
     headshots[client] = 0;
+}
+
+public void OnClientCookiesCached(int client) {
+    if (noscopes_cookie.GetClientTime(client) == 0) {
+        noscopes_cookie.Set(client, "on");
+        noscopes_enabled[client] = true;
+    } else {
+        char buffer[10];
+        noscopes_cookie.Get(client, buffer, sizeof(buffer));
+
+        noscopes_enabled[client] = StrEqual(buffer, "on", false);
+    }
+}
+
+public Action Cmd_Noscopes(int client, int args) {
+    if (!GFLDM_IsValidClient(client)) {
+        return Plugin_Handled;
+    }
+
+    noscopes_enabled[client] = !noscopes_enabled[client];
+    if (noscopes_enabled[client]) {
+        noscopes_cookie.Set(client, "on");
+        GFLDM_PrintToChat(client, "%t", "Noscopes enabled");
+    } else {
+        noscopes_cookie.Set(client, "off");
+        GFLDM_PrintToChat(client, "%t", "Noscopes disabled");
+    }
+
+    return Plugin_Handled;
 }
 
 public void OnPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
@@ -68,15 +102,19 @@ public void OnPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
         noscopes[attacker]++;
         if (headshot) {
             headshots[attacker]++;
-            GFLDM_PrintToChatAll("%t", "Headshot noscoped", attacker, victim, distance);
+            GFLDM_PrintToChatFilter(ChatFilter_NoscopesEnabled, "%t", "Headshot noscoped", attacker, victim, distance);
         } else {
-            GFLDM_PrintToChatAll("%t", "Noscoped", attacker, victim, distance);
+            GFLDM_PrintToChatFilter(ChatFilter_NoscopesEnabled, "%t", "Noscoped", attacker, victim, distance);
         }
 
         if (noscopes[attacker] % annouce_kill_count == 0) {
-            GFLDM_PrintToChatAll("%t", "Total noscopes", attacker, noscopes[attacker], headshots[attacker]);
+            GFLDM_PrintToChatFilter(ChatFilter_NoscopesEnabled, "%t", "Total noscopes", attacker, noscopes[attacker], headshots[attacker]);
         }
     }
+}
+
+public bool ChatFilter_NoscopesEnabled(int client) {
+    return GFLDM_IsValidClient(client) && noscopes_enabled[client];
 }
 
 public int native_GetNoscopes(Handle plugin, int numParams) {

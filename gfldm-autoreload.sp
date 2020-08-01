@@ -10,7 +10,7 @@ public Plugin myinfo = {
     description = "Configurable automatic weapon reloads",
     version = GFLDM_VERSION, 
     url = "https://github.com/GFLClan/gfl-dm-pack"
-}
+};
 
 enum struct ReloadValues {
     int on_kill;
