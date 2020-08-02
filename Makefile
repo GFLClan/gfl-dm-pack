@@ -12,4 +12,4 @@ $(COMPILED): compiled/%.smx : %.sp $(DEPS)
 all: $(COMPILED)
 
 clean: 
-	rm -f compiled/$(COMPILED)
+	rm -f $(COMPILED)

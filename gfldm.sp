@@ -4,7 +4,7 @@
 #include <gfldm>
 
 public Plugin myinfo = {
-    name = "GFL DM Core",
+    name = "GFLDM Core",
     author = "Dreae",
     description = "Basic DM QoL improvements",
     version = GFLDM_VERSION, 
@@ -15,7 +15,7 @@ ConVar cvar_remove_physics_ents;
 
 public void OnPluginStart() {
     cvar_remove_physics_ents = CreateConVar("gfldm_remove_physics_ents", "1", "Remove CPhysicsPropMultiplayer");
-    CreateConVar("gfldm_version", GFLDM_VERSION, "",  FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY);
+    DEFINE_VERSION("gfldm_version")
 
     HookEvent("round_start", Event_RoundStart);
 
@@ -41,10 +41,6 @@ void RemovePhysicsProps() {
                 if (GetEdictClassname(c, clsname, sizeof(clsname))) {
                     if (StrEqual(clsname, "prop_physics_multiplayer")) {
                         RemoveEdict(c);
-                    } else {
-                        char model[PLATFORM_MAX_PATH];
-                        GetEntPropString(c, Prop_Data, "m_ModelName", model, sizeof(model));
-                        PrintToServer("%s: %s", clsname, model);
                     }
                 }
             }

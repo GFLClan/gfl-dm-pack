@@ -6,7 +6,7 @@
 #include <gfldm>
 
 public Plugin myinfo = {
-    name = "GFL DM Sounds",
+    name = "GFLDM Sounds",
     author = "Dreae",
     description = "DM sound improvements",
     version = GFLDM_VERSION, 
@@ -18,6 +18,7 @@ ConVar cvar_spawn_sounds;
 ConVar cvar_kill_sounds;
 
 public void OnPluginStart() {
+    DEFINE_VERSION("gfldm_sounds_version")
     cvar_block_sounds = CreateConVar("gfldm_block_sounds", "1", "Blocks itempickup sounds");
     cvar_spawn_sounds = CreateConVar("gfldm_spawn_sounds", "1", "Emit sound from players after spawn");
     cvar_kill_sounds = CreateConVar("gfldm_kill_sounds", "1", "Emit sound to player on kills");

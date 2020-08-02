@@ -13,6 +13,10 @@ public Plugin myinfo = {
     url = "https://github.com/GFLClan/gfl-dm-pack"
 };
 
+public void OnPluginStart() {
+    DEFINE_VERSION("gfldm_chat_version")
+}
+
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
     CreateNative("GFLDM_PrintToChatAll", native_PrintToChatAll);
     CreateNative("GFLDM_PrintToChatFilter", native_PrintToChatFilter);

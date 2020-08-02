@@ -16,6 +16,7 @@ PlayerStats playerStats[MAXPLAYERS + 1];
 GlobalForward fwd_statsChange;
 
 public void OnPluginStart() {
+    DEFINE_VERSION("gfldm_stats_version")
     HookEvent("player_death", EventPlayerDeath);
     HookEvent("player_hurt", EventPlayerHurt);
     HookEvent("weapon_fire", EventWeaponFire);

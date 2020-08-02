@@ -43,27 +43,23 @@ bool livetop_enabled[MAXPLAYERS + 1] = {false, ...};
 
 
 public OnPluginStart() {
+    DEFINE_VERSION("gfldm_livestats_version")
+
     HookEvent("player_spawn", Event_PlayerSpawn);
     RegConsoleCmd("sm_livestats", Cmd_LiveStats);
+
     enabled_cookie = new Cookie("gfldm-livestats", "", CookieAccess_Protected);
+    FIRE_CLIENT_COOKIES()
     LoadTranslations("gfldm_livetop.phrases");
 
     CreateTimer(60.0, Timer_UpdateDisplay, 0, TIMER_REPEAT);
 }
 
-public APLRes AskPluginLoad2(Handle myself, bool late, char[] err, int errmax) {
+public void OnAllPluginsLoaded() {
     if (!LibraryExists("gfldm-stats")) {
-        Format(err, errmax, "GFLDM Stats is required");
-        return APLRes_Failure;
+        SetFailState("gfldm-stats Required");
     }
     noscopesEnabled = LibraryExists("gfldm-noscopes");
-    if (late) {
-        for (int c = 1; c <= MaxClients; c++) {
-
-        }
-    }
-
-    return APLRes_Success;
 }
 
 public void OnClientCookiesCached(client) {

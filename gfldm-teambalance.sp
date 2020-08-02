@@ -5,7 +5,7 @@
 #include <gfldm-chat>
 
 public Plugin myinfo = {
-    name = "GFL DM TeamBalance",
+    name = "GFLDM TeamBalance",
     author = "Dreae",
     description = "Balances teams",
     version = GFLDM_VERSION, 
@@ -13,6 +13,7 @@ public Plugin myinfo = {
 };
 
 public void OnPluginStart() {
+    DEFINE_VERSION("gfldm_teambalance_version")
     HookEvent("player_death", OnPlayerDeath);
 
     LoadTranslations("gfldm_teambalance.phrases");

@@ -2,9 +2,20 @@
     #endinput
 #endif
 #define _gfldm_included
-#define GFLDM_VERSION "1.4.3"
+#define GFLDM_VERSION "1.4.4"
 
 #include <cstrike>
+
+#define DEFINE_VERSION(%1) \
+    ConVar cvar_version = CreateConVar(%1, GFLDM_VERSION, "",  FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY);\
+    cvar_version.SetString(GFLDM_VERSION);
+
+#define FIRE_CLIENT_COOKIES(%1) \
+    for (int _c = 1; _c <= MaxClients; _c++) {\
+        if (AreClientCookiesCached(_c)) {\
+            OnClientCookiesCached(_c);\
+        }\
+    }
 
 stock bool GFLDM_IsValidClient(int client, bots=false) {
     return (0 < client <= MaxClients) && IsClientInGame(client) && ((IsFakeClient(client) && bots) || !IsFakeClient(client));

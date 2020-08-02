@@ -19,6 +19,7 @@ bool spawning[MAXPLAYERS + 1] = {false, ...};
 Cookie enabled_cookie;
 
 public void OnPluginStart() {
+    DEFINE_VERSION("gfldm_autosilencer_version")
     for (int c = 1; c <= MaxClients; c++) {
         if (GFLDM_IsValidClient(c)) {
             OnClientPutInServer(c);
@@ -26,6 +27,8 @@ public void OnPluginStart() {
     }
 
     enabled_cookie = new Cookie("GFLDM_Autosilencer", "", CookieAccess_Protected);
+    FIRE_CLIENT_COOKIES()
+
     RegConsoleCmd("sm_silencer", Cmd_Silencer, "Toggle autosilencer");
     HookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Pre);
     HookEvent("player_spawn", Event_PlayerSpawn_Post, EventHookMode_Post);
