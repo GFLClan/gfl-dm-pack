@@ -54,7 +54,11 @@ public void Hook_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 }
 
 public Action Timer_EmitSpawnSound(Handle timer, any client) {
-    EmitSoundToAll("buttons/button19.wav", client);
+    if (GFLDM_IsValidClient(client, true)) {
+        float origin[3];
+        GetClientAbsOrigin(client, origin);
+        EmitAmbientSound("buttons/button19.wav", origin, client, SNDLEVEL_TRAFFIC);
+    }
 
     return Plugin_Stop;
 }

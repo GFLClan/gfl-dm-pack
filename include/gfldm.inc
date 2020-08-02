@@ -2,12 +2,12 @@
     #endinput
 #endif
 #define _gfldm_included
-#define GFLDM_VERSION "1.4.4"
+#define GFLDM_VERSION "1.4.5"
 
 #include <cstrike>
 
 #define DEFINE_VERSION(%1) \
-    ConVar cvar_version = CreateConVar(%1, GFLDM_VERSION, "",  FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY);\
+    ConVar cvar_version = CreateConVar(%1, GFLDM_VERSION, "",  FCVAR_REPLICATED);\
     cvar_version.SetString(GFLDM_VERSION);
 
 #define FIRE_CLIENT_COOKIES(%1) \

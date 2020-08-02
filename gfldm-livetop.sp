@@ -133,11 +133,6 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 }
 
 void Draw(int client, const char[] title, LineFunction line_fn) {
-    ShowHudText(client, CHANNEL_TITLE, "");
-    ShowHudText(client, CHANNEL_BODY, "");
-    ShowHudText(client, CHANNEL_TITLE, "");
-    ShowHudText(client, CHANNEL_BODY, "");
-
     SetHudTextParams(0.14, 0.03, 600.0, 0, 118, 178, 255);
     ShowHudText(client, CHANNEL_TITLE, "%t", title);
     

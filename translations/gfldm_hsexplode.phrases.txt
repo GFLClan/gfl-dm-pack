@@ -1,0 +1,12 @@
+"Phrases"
+{
+    "HS explosions enabled"
+    {
+        "en"                "{normal}[{green}HSExplode{normal}] Headshot explosions enabled."
+    }
+
+   "HS explosions disabled"
+   {
+       "en"                 "{normal}[{green}HSExplode{normal}] Headshot explosions disabled."
+   } 
+}
