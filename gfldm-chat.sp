@@ -105,7 +105,7 @@ void fmt_print(int client, char[] buffer, int maxsize, int numParams, int paramO
 }
 
 stock void GetTeamColor(int client, char[] color_buff, int maxsize) {
-    if (!(0 < client < MaxClients) || !IsClientInGame(client)) {
+    if (!(0 < client <= MaxClients) || !IsClientInGame(client)) {
         ThrowError("Invalid client index %i", client);
     }
 

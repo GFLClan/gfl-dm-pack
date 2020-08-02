@@ -37,6 +37,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     fwd_OnNoscope = new GlobalForward("GFLDM_OnNoscope", ET_Ignore, Param_Cell, Param_Cell, Param_Cell, Param_Float);
     CreateNative("GFLDM_GetNoscopes", native_GetNoscopes);
     CreateNative("GFLDM_GetNoscopeHeadshots", native_GetNoscopeHeadshots);
+    RegPluginLibrary("gfldm-noscopes");
 }
 
 public void OnClientConnected(int client) {

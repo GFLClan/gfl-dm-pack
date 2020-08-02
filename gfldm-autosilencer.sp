@@ -19,7 +19,7 @@ bool spawning[MAXPLAYERS + 1] = {false, ...};
 Cookie enabled_cookie;
 
 public void OnPluginStart() {
-    for (int c = 1; c < MaxClients; c++) {
+    for (int c = 1; c <= MaxClients; c++) {
         if (GFLDM_IsValidClient(c)) {
             OnClientPutInServer(c);
         }

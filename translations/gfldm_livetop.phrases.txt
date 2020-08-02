@@ -1,0 +1,32 @@
+"Phrases"
+{
+    "Highest Accuracy"
+    {
+        "en"                "Highest Accuracy"
+    }
+
+    "Most Headshots"
+    {
+        "en"                "Most Headshots"
+    }
+
+    "Most Noscopes"
+    {
+        "en"                "Most Noscopes"
+    }
+
+    "Highest KDR"
+    {
+        "en"                "Highest KDR"
+    }
+
+    "Livestats enabled"
+    {
+        "en"                "{normal}[{green}LiveStats{normal}] LiveStats enabled."
+    }
+
+    "Livestats disabled"
+    {
+        "en"                "{normal}[{green}LiveStats{normal}] LiveStats disabled."
+    }
+}
