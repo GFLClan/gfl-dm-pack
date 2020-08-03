@@ -16,12 +16,19 @@ public Plugin myinfo = {
 ConVar cvar_block_sounds;
 ConVar cvar_spawn_sounds;
 ConVar cvar_kill_sounds;
+bool block_sounds = false;
+bool spawn_sounds = false;
+bool kill_sounds = false;
 
 public void OnPluginStart() {
     DEFINE_VERSION("gfldm_sounds_version")
     cvar_block_sounds = CreateConVar("gfldm_block_sounds", "1", "Blocks itempickup sounds");
     cvar_spawn_sounds = CreateConVar("gfldm_spawn_sounds", "1", "Emit sound from players after spawn");
     cvar_kill_sounds = CreateConVar("gfldm_kill_sounds", "1", "Emit sound to player on kills");
+    cvar_block_sounds.AddChangeHook(Cvar_ConfigChanged);
+    cvar_spawn_sounds.AddChangeHook(Cvar_ConfigChanged);
+    cvar_kill_sounds.AddChangeHook(Cvar_ConfigChanged);
+
     AddNormalSoundHook(Hook_NormalSound);
     HookEvent("player_spawn", Hook_PlayerSpawn);
     HookEvent("player_death", Hook_PlayerDeath);
@@ -34,8 +41,18 @@ public void OnMapStart() {
     PrecacheSound("buttons/bell1.wav", true);
 }
 
+public void OnConfigsExecuted() {
+    block_sounds = cvar_block_sounds.BoolValue;
+    spawn_sounds = cvar_spawn_sounds.BoolValue;
+    kill_sounds = cvar_kill_sounds.BoolValue;
+}
+
+public void Cvar_ConfigChanged(ConVar cvar, const char[] oldValue, const char[] newValue) {
+    OnConfigsExecuted();
+}
+
 public void Hook_PlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
-    if (cvar_spawn_sounds.BoolValue) {
+    if (spawn_sounds) {
         int client = GetClientOfUserId(event.GetInt("userid"));
         if (GFLDM_IsValidClient(client, true)) {
             CreateTimer(0.1, Timer_EmitSpawnSound, client, TIMER_FLAG_NO_MAPCHANGE);
@@ -44,7 +61,7 @@ public void Hook_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 }
 
 public void Hook_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
-    if (cvar_kill_sounds.BoolValue) {
+    if (kill_sounds) {
         int victim = GetClientOfUserId(event.GetInt("userid"));
         int attacker = GetClientOfUserId(event.GetInt("attacker"));
         if (attacker != victim && GFLDM_IsValidClient(attacker)) {
@@ -68,7 +85,7 @@ public Action Hook_NormalSound(
     int &entity, int &channel, float &volume, int &level, int &pitch, int &flags, 
     char soundEntry[PLATFORM_MAX_PATH], int &seed
 ) {
-    if (cvar_block_sounds.BoolValue) {
+    if (block_sounds) {
         if (StrEqual(sample, "items/itempickup.wav") || StrEqual(sample, "items/ammopickup.wav")) {
             return Plugin_Stop;
         }

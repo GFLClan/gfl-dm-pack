@@ -243,7 +243,7 @@ public void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats) 
         redraw = true;
     }
 
-    if (stats_class & STATCLASS_HEADSHOTS != 0) {
+    if (stats_class & STATCLASS_HEADSHOTS != 0 || stats_class & STATCLASS_KILLS != 0) {
         update_top(mostHeadshots, sizeof(mostHeadshots), new_entry, sort_HSPercent);
         redraw = true;
     }
