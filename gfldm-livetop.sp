@@ -29,17 +29,23 @@ enum ActiveDisplay {
     Display_Accuracy = 0,
     Display_Headshots = 1,
     Display_Noscopes = 2,
-    Display_KDR = 3
+    Display_KDR = 3,
+    Display_Streak = 4
 };
 
-StatsEntry mostAccurate[4];
-StatsEntry mostHeadshots[4];
-StatsEntry mostNoscopes[4];
-StatsEntry highestKdr[4];
+#define SZ_STATS 5
+
+StatsEntry mostAccurate[SZ_STATS];
+StatsEntry mostHeadshots[SZ_STATS];
+StatsEntry mostNoscopes[SZ_STATS];
+StatsEntry highestKdr[SZ_STATS];
+StatsEntry highestStreak[SZ_STATS];
 ActiveDisplay displayed = Display_Accuracy;
 bool noscopesEnabled = false;
 Cookie enabled_cookie;
 bool livetop_enabled[MAXPLAYERS + 1] = {false, ...};
+ConVar cvar_cycle_time;
+Handle timer_cycle;
 
 
 public OnPluginStart() {
@@ -51,8 +57,24 @@ public OnPluginStart() {
     enabled_cookie = new Cookie("gfldm-livestats", "", CookieAccess_Protected);
     FIRE_CLIENT_COOKIES()
     LoadTranslations("gfldm_livetop.phrases");
+    cvar_cycle_time = CreateConVar("gfldm_livestats_cycle_time", "60.0", "Cycle time in seconds");
+    cvar_cycle_time.AddChangeHook(CvarChanged);
 
-    CreateTimer(60.0, Timer_UpdateDisplay, 0, TIMER_REPEAT);
+    AutoExecConfig();
+}
+
+public void OnConfigsExecuted() {
+    if (timer_cycle == null) {
+        timer_cycle = CreateTimer(cvar_cycle_time.FloatValue, Timer_UpdateDisplay, 0, TIMER_REPEAT);
+    }
+}
+
+public void CvarChanged(ConVar cvar, const char[] oldVlue, const char[] newValue) {
+    if (timer_cycle != null) {
+        KillTimer(timer_cycle);
+    }
+
+    timer_cycle = CreateTimer(cvar_cycle_time.FloatValue, Timer_UpdateDisplay, 0, TIMER_REPEAT);
 }
 
 public void OnAllPluginsLoaded() {
@@ -116,7 +138,7 @@ public Action Cmd_LiveStats(int client, int args) {
 }
 
 Action Timer_UpdateDisplay(Handle timer) {
-    displayed = (displayed + 1) % 4;
+    displayed = (displayed + 1) % (Display_Streak + 1);
     if (displayed == Display_Noscopes && !noscopesEnabled) {
         displayed = Display_KDR;
     }
@@ -154,6 +176,8 @@ void RedrawClient(int client) {
                 Draw(client, "Most Noscopes", RenderLine_Noscopes);
             case Display_KDR:
                 Draw(client, "Highest KDR", RenderLine_KDR);
+            case Display_Streak:
+                Draw(client, "Highest Streak", RenderLine_Streak);
         }
     }
 }
@@ -222,6 +246,15 @@ bool RenderLine_KDR(int j, char[] line, int maxsize) {
     return false;
 }
 
+bool RenderLine_Streak(int j, char[] line, int maxsize) {
+    if (GFLDM_IsValidClient(highestStreak[j].client, true)) {
+        Format(line, maxsize, " %N: %d", highestStreak[j].client, highestStreak[j].stats.highest_streak);
+        return true;
+    }
+
+    return false;
+}
+
 public void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats) {
     StatsEntry new_entry;
     new_entry.client = client;
@@ -245,6 +278,11 @@ public void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats) 
 
     if (stats_class & STATCLASS_HEADSHOTS != 0 || stats_class & STATCLASS_KILLS != 0) {
         update_top(mostHeadshots, sizeof(mostHeadshots), new_entry, sort_HSPercent);
+        redraw = true;
+    }
+
+    if (stats_class & STATCLASS_HIGHEST_STREAK != 0) {
+        update_top(highestStreak, sizeof(highestStreak), new_entry, sort_Streak);
         redraw = true;
     }
 
@@ -316,6 +354,10 @@ int sort_HSPercent(StatsEntry a, StatsEntry b) {
     }
 
     return 0;
+}
+
+int sort_Streak(StatsEntry a, StatsEntry b) {
+    return a.stats.highest_streak - b.stats.highest_streak;
 }
 
 void update_top(StatsEntry[] entries, int maxsize, StatsEntry new_entry, SortFunction comp_func) {

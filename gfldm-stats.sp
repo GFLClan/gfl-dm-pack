@@ -43,7 +43,7 @@ public void EventPlayerDeath(Event event, const char[] name, bool dontBroadcast)
     playerStats[attacker].kills++;
     playerStats[attacker].current_streak++;
     if (playerStats[attacker].current_streak > playerStats[attacker].highest_streak) {
-        playerStats[attacker].highest_streak = playerStats[attacker].current_streak;
+        playerStats[attacker].highest_streak++;
         stat_class = stat_class | STATCLASS_HIGHEST_STREAK;
     }
 

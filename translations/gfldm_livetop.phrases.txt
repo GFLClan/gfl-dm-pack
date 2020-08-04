@@ -20,6 +20,11 @@
         "en"                "Highest KDR"
     }
 
+    "Highest Streak"
+    {
+        "en"                "Highest Streak"
+    }
+
     "Livestats enabled"
     {
         "en"                "{normal}[{green}LiveStats{normal}] LiveStats enabled."

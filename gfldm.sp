@@ -1,6 +1,7 @@
 #pragma semicolon 1
 
 #include <sourcemod>
+#include <sdkhooks>
 #include <gfldm>
 
 public Plugin myinfo = {
@@ -18,8 +19,30 @@ public void OnPluginStart() {
     DEFINE_VERSION("gfldm_version")
 
     HookEvent("round_start", Event_RoundStart);
+    RegConsoleCmd("sm_usermessage", ConCmd_Message);
+
+    for (int c = 1; c <= MaxClients; c++) {
+        if (IsClientInGame(c)) {
+            OnClientPutInServer(c);
+        }
+    }
+
+    for (int c = MaxClients + 1; c < GetMaxEntities(); c++) {
+        RemoveIfWeapon(c);
+    }
 
     AutoExecConfig();
+}
+
+public Action ConCmd_Message(int client, int args) {
+    char msg_type[64];
+    GetCmdArg(1, msg_type, sizeof(msg_type));
+    Handle hMessage = StartMessageOne(msg_type, client);
+    BfWriteByte(hMessage, 1);
+    BfWriteString(hMessage, "Hello world");
+    EndMessage();
+
+    return Plugin_Handled;
 }
 
 public void OnMapStart() {
@@ -30,6 +53,40 @@ public void OnMapStart() {
 
 public void Event_RoundStart(Event event, const char[] name, bool dontBroadcast) {
     RemovePhysicsProps();
+}
+
+public void OnClientPutInServer(int client) {
+    if (IsValidEdict(client)) {
+        SDKHook(client, SDKHook_WeaponDropPost, SDKHook_OnWeaponDropPost);
+    }
+}
+
+public void OnEntityCreated(int entity) {
+    if (IsValidEdict(entity)) {
+        char clsname[64];
+        if (GetEdictClassname(entity, clsname, sizeof(clsname))) {
+            if (StrContains(clsname, "weapon_") != -1) {
+                CreateTimer(0.25, Timer_CheckWeapon, entity, TIMER_FLAG_NO_MAPCHANGE);
+            }
+        }
+    }
+}
+
+public Action Timer_CheckWeapon(Handle timer, any entity) {
+    RemoveIfWeapon(entity);
+}
+
+void RemoveIfWeapon(int entity) {
+    if (IsValidEdict(entity)) {
+        char clsname[64];
+        if (GetEdictClassname(entity, clsname, sizeof(clsname))) {
+            if (StrContains(clsname, "weapon_") != -1) {
+                if (GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity", 0) == -1) {
+                    RemoveEntity(entity);
+                }
+            }
+        }
+    }
 }
 
 void RemovePhysicsProps() {
@@ -45,5 +102,11 @@ void RemovePhysicsProps() {
                 }
             }
         }
+    }
+}
+
+public void SDKHook_OnWeaponDropPost(int client, int weapon) {
+    if (IsValidEntity(weapon)) {
+        RemoveEntity(weapon);
     }
 }
