@@ -13,9 +13,13 @@ public Plugin myinfo = {
 }
 
 ConVar cvar_remove_physics_ents;
+ConVar cvar_clean_up_weapons;
+bool clean_up_weapons = false;
 
 public void OnPluginStart() {
     cvar_remove_physics_ents = CreateConVar("gfldm_remove_physics_ents", "1", "Remove CPhysicsPropMultiplayer");
+    cvar_clean_up_weapons = CreateConVar("gfldm_clean_up_weapons", "1", "Remove dropped weapons");
+    cvar_clean_up_weapons.AddChangeHook(CvarChanged);
     DEFINE_VERSION("gfldm_version")
 
     HookEvent("round_start", Event_RoundStart);
@@ -27,11 +31,20 @@ public void OnPluginStart() {
         }
     }
 
-    for (int c = MaxClients + 1; c < GetMaxEntities(); c++) {
-        RemoveIfWeapon(c);
-    }
-
     AutoExecConfig();
+}
+
+public void OnConfigsExecuted() {
+    clean_up_weapons = cvar_clean_up_weapons.BoolValue;
+    if (clean_up_weapons) {
+        for (int c = MaxClients + 1; c < GetMaxEntities(); c++) {
+            RemoveIfWeapon(c);
+        }
+    }
+}
+
+public void CvarChanged(ConVar cvar, const char[] oldValue, const char[] newValue) {
+    OnConfigsExecuted();
 }
 
 public Action ConCmd_Message(int client, int args) {
@@ -62,7 +75,7 @@ public void OnClientPutInServer(int client) {
 }
 
 public void OnEntityCreated(int entity) {
-    if (IsValidEdict(entity)) {
+    if (IsValidEdict(entity) && clean_up_weapons) {
         char clsname[64];
         if (GetEdictClassname(entity, clsname, sizeof(clsname))) {
             if (StrContains(clsname, "weapon_") != -1) {
@@ -106,7 +119,7 @@ void RemovePhysicsProps() {
 }
 
 public void SDKHook_OnWeaponDropPost(int client, int weapon) {
-    if (IsValidEntity(weapon)) {
+    if (IsValidEntity(weapon) && clean_up_weapons) {
         RemoveEntity(weapon);
     }
 }
