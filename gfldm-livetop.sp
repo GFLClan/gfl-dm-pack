@@ -1,10 +1,10 @@
 #pragma semicolon 1
 
 #include <sourcemod>
-#include <clientprefs>
 #include <gfldm>
-#include <gfldm-stats>
 #include <gfldm-chat>
+#include <gfldm-stats>
+#include <gfldm-clientprefs>
 
 public Plugin myinfo = {
     name = "GFLDM Live Top",
@@ -84,17 +84,7 @@ public void OnAllPluginsLoaded() {
     noscopesEnabled = LibraryExists("gfldm-noscopes");
 }
 
-public void OnClientCookiesCached(client) {
-    if (enabled_cookie.GetClientTime(client) == 0) {
-        enabled_cookie.Set(client, "on");
-        livetop_enabled[client] = true;
-    } else {
-        char buffer[10];
-        enabled_cookie.Get(client, buffer, sizeof(buffer));
-
-        livetop_enabled[client] = StrEqual(buffer, "on", false);
-    }
-}
+LOAD_COOKIE_BOOL(enabled_cookie, livetop_enabled, "on", true)
 
 public void OnClientDisconnect(int client) {
     for (int c = 0; c < sizeof(mostAccurate); c++) {

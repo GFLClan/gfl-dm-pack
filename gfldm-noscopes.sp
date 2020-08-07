@@ -1,9 +1,9 @@
 #pragma semicolon 1
 
 #include <sourcemod>
-#include <clientprefs>
 #include <gfldm>
 #include <gfldm-chat>
+#include <gfldm-clientprefs>
 
 int noscopes[MAXPLAYERS + 1];
 int headshots[MAXPLAYERS + 1];
@@ -48,17 +48,7 @@ public void OnClientConnected(int client) {
     headshots[client] = 0;
 }
 
-public void OnClientCookiesCached(int client) {
-    if (noscopes_cookie.GetClientTime(client) == 0) {
-        noscopes_cookie.Set(client, "on");
-        noscopes_enabled[client] = true;
-    } else {
-        char buffer[10];
-        noscopes_cookie.Get(client, buffer, sizeof(buffer));
-
-        noscopes_enabled[client] = StrEqual(buffer, "on", false);
-    }
-}
+LOAD_COOKIE_BOOL(noscopes_cookie, noscopes_enabled, "on", true)
 
 public Action Cmd_Noscopes(int client, int args) {
     if (!GFLDM_IsValidClient(client)) {

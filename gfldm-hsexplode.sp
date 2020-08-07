@@ -1,10 +1,10 @@
 #pragma semicolon 1
 
 #include <sourcemod>
-#include <clientprefs>
 #include <sdktools>
 #include <gfldm>
 #include <gfldm-chat>
+#include <gfldm-clientprefs>
 
 public Plugin myinfo = {
     name = "GFLDM Headshot Explode",
@@ -65,17 +65,7 @@ public void OnConfigsExecuted() {
     admin_flags = ReadFlagString(flagString);
 }
 
-public void OnClientCookiesCached(int client) {
-    if (enabled_cookie.GetClientTime(client) == 0) {
-        enabled_cookie.Set(client, "on");
-        explosions_enabled[client] = true;
-    } else {
-        char buffer[10];
-        enabled_cookie.Get(client, buffer, sizeof(buffer));
-
-        explosions_enabled[client] = StrEqual(buffer, "on", false);
-    }
-}
+LOAD_COOKIE_BOOL(enabled_cookie, explosions_enabled, "on", true)
 
 public void OnMapStart() {
     PrecacheSound(EXPLODE_SOUND, true);

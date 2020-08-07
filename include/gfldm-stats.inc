@@ -58,5 +58,6 @@ enum struct PlayerStats {
     }
 }
 
-native void GFLDM_GetPlayerStats(int client, any playerStats);
+typedef StatFunction = function void (int client, PlayerStats stats);
+native void GFLDM_WithPlayerStats(int client, StatFunction callback);
 forward void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats);

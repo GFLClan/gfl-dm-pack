@@ -24,7 +24,23 @@ public void OnPluginStart() {
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] err, int errmax) {
     fwd_statsChange = new GlobalForward("GFLDM_OnStatsUpdate", ET_Ignore, Param_Cell, Param_Cell, Param_Array);
+    CreateNative("GFLDM_WithPlayerStats", Native_WithPlayerStats);
     RegPluginLibrary("gfldm-stats");
+}
+
+public int Native_WithPlayerStats(Handle plugin, int numParas) {
+    int client = GetNativeCell(1);
+    if (!GFLDM_IsValidClient(client, true)) {
+        return false;
+    }
+
+    StatFunction func = GetNativeCell(2);
+    Call_StartFunction(plugin, func);
+    Call_PushCell(client);
+    Call_PushArray(playerStats[client], sizeof(playerStats[]));
+    Call_Finish();
+
+    return 0;
 }
 
 public void EventPlayerDeath(Event event, const char[] name, bool dontBroadcast) {

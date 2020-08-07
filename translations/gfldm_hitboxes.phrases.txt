@@ -1,0 +1,37 @@
+"Phrases"
+{
+    "Head"
+    {
+        "en"                "Head"
+    }
+
+    "Chest"
+    {
+        "en"                "Chest"
+    }
+    
+    "Stomach"
+    {
+        "en"                "Stomach"
+    }
+    
+    "Left Arm"
+    {
+        "en"                "Left Arm"
+    }
+    
+    "Right Arm"
+    {
+        "en"                "Right Arm"
+    }
+    
+    "Left Leg"
+    {
+        "en"                "Left Leg"
+    }
+    
+    "Right Leg"
+    {
+        "en"                "Right Leg"
+    }
+}

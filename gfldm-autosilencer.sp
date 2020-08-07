@@ -2,9 +2,9 @@
 
 #include <sourcemod>
 #include <sdkhooks>
-#include <clientprefs>
 #include <gfldm>
 #include <gfldm-chat>
+#include <gfldm-clientprefs>
 
 public Plugin myinfo = {
     name = "GFLDM Autosilencer",
@@ -85,14 +85,4 @@ public Action Hook_WeaponEquip(int client, int weapon) {
     }
 }
 
-public void OnClientCookiesCached(client) {
-    if (enabled_cookie.GetClientTime(client) == 0) {
-        enabled_cookie.Set(client, "on");
-        silencer_enabled[client] = true;
-    } else {
-        char buffer[10];
-        enabled_cookie.Get(client, buffer, sizeof(buffer));
-
-        silencer_enabled[client] = StrEqual(buffer, "on", false);
-    }
-}
+LOAD_COOKIE_BOOL(enabled_cookie, silencer_enabled, "on", true)
