@@ -1,0 +1,37 @@
+"Phrases"
+{
+    "Highest Accuracy"
+    {
+        "ru"                "Наибольшая точность"
+    }
+
+    "Most Headshots"
+    {
+        "ru"                "Большинство убийств в голову"
+    }
+
+    "Most Noscopes"
+    {
+        "ru"                "Большинство убийств без прицела"
+    }
+
+    "Highest KDR"
+    {
+        "ru"                "Больший KDR"
+    }
+
+    "Highest Streak"
+    {
+        "ru"                "Самая наибольшая серия"
+    }
+
+    "Livestats enabled"
+    {
+        "ru"                "{normal}[{green}LiveStats{normal}] LiveStats включён."
+    }
+
+    "Livestats disabled"
+    {
+        "ru"                "{normal}[{green}LiveStats{normal}] LiveStats отключен."
+    }
+}
