@@ -1,0 +1,12 @@
+"Phrases"
+{
+    "HS explosions enabled"
+    {
+        "ru"                "{normal}[{green}HSExplode{normal}] Взрыв при убийстве в голову включён."
+    }
+
+   "HS explosions disabled"
+   {
+       "ru"                 "{normal}[{green}HSExplode{normal}] Взрыв при убийстве в голову отключён."
+   } 
+}

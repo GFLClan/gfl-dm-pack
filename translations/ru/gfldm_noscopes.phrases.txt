@@ -1,0 +1,30 @@
+"Phrases"
+{
+    "Headshot noscoped"
+    {
+        "#format"       "{1:N},{2:N},{3:.2f}"
+        "ru"            "{normal}[{green}NoScope{normal}] {teamcolor[2]}{1} {normal}убил без прицела в голову {teamcolor[3]}{2} {normal}[{green}HS{normal}] с {green}{3}м."
+    }
+
+    "Noscoped"
+    {
+        "#format"       "{1:N},{2:N},{3:.2f}"
+        "ru"            "{normal}[{green}NoScope{normal}] {teamcolor[2]}{1} {normal}убил без прицела {teamcolor[3]}{2} {normal}с {green}{3}м."
+    }
+
+    "Total noscopes"
+    {
+        "#format"       "{1:N},{2:d},{3:d}"
+        "ru"            "{normal}[{green}NoScope{normal}] {teamcolor[2]}{1} {normal}имеет {green}{2} {normal}убийств без прицела [{green}{3} HS{normal}]"
+    }
+
+    "Noscopes enabled"
+    {
+        "ru"            "{normal}[{green}NoScope{normal}] Уведомления убийств без прицела {green}включены{normal}."
+    }
+    
+    "Noscopes disabled"
+    {
+        "ru"            "{normal}[{green}NoScope{normal}] Уведомления убийств без прицела {green}отключены{normal}."
+    }
+}

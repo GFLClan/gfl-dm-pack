@@ -1,0 +1,12 @@
+"Phrases"
+{
+    "Switched CT"
+    {
+        "ru"                "{normal}[{green}Баланс команд{normal}] Вас перенесли в команду {team_ct}спецназа {normal}для баланса команд."
+    }
+
+    "Switched T"
+    {
+        "ru"                "{normal}[{green}Баланс команд{normal}] Вас перенесли в команду {team_t}террористов {normal}для баланса команд."
+    }
+}
