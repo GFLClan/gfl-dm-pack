@@ -1,0 +1,8 @@
+"Phrases"
+{
+    "Map Restarting in..."
+    {
+        "#format"       "{1:d}"
+        "en"            "{normal}[{green}GLFDM{normal}] Map restarting in {team_ct}{1} {normal}seconds..."
+    }
+}

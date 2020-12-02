@@ -3,6 +3,7 @@
 #include <sourcemod>
 #include <sdkhooks>
 #include <gfldm>
+#include <gfldm-chat>
 
 public Plugin myinfo = {
     name = "GFLDM Core",
@@ -14,12 +15,22 @@ public Plugin myinfo = {
 
 ConVar cvar_remove_physics_ents;
 ConVar cvar_clean_up_weapons;
+ConVar cvar_autorestart_map;
+ConVar cvar_mapchange_delay;
 bool clean_up_weapons = false;
+int map_reload_time = 0;
+int map_reload_interval = 0;
+int map_change_delay = 0;
 
 public void OnPluginStart() {
     cvar_remove_physics_ents = CreateConVar("gfldm_remove_physics_ents", "1", "Remove CPhysicsPropMultiplayer");
     cvar_clean_up_weapons = CreateConVar("gfldm_clean_up_weapons", "1", "Remove dropped weapons");
     cvar_clean_up_weapons.AddChangeHook(CvarChanged);
+    cvar_autorestart_map = CreateConVar("gfldm_restart_map_interval", "0", "Restart the map every x seconds");
+    cvar_autorestart_map.AddChangeHook(CvarChanged);
+    cvar_mapchange_delay = CreateConVar("gfldm_restart_map_delay", "5", "Wait x seconds before reloading the map");
+    cvar_mapchange_delay.AddChangeHook(CvarChanged);
+
     DEFINE_VERSION("gfldm_version")
 
     HookEvent("round_start", Event_RoundStart);
@@ -32,6 +43,8 @@ public void OnPluginStart() {
     }
 
     AutoExecConfig();
+    LoadTranslations("gfldm.phrases.txt");
+    CreateTimer(1.0, Timer_CheckMapReload, 0, TIMER_REPEAT);
 }
 
 public void OnConfigsExecuted() {
@@ -41,10 +54,49 @@ public void OnConfigsExecuted() {
             RemoveIfWeapon(c);
         }
     }
+
+    int new_map_reload_interval = cvar_autorestart_map.IntValue;
+    if (new_map_reload_interval != map_reload_interval){
+        if (new_map_reload_interval != 0) {
+            map_reload_time = GetTime() + new_map_reload_interval;
+            map_reload_interval = new_map_reload_interval;
+        } else if (new_map_reload_interval == 0) {
+            map_reload_time = 0;
+        }
+    }
+
+    map_change_delay = cvar_mapchange_delay.IntValue;
 }
 
 public void CvarChanged(ConVar cvar, const char[] oldValue, const char[] newValue) {
     OnConfigsExecuted();
+}
+
+public Action Timer_CheckMapReload(Handle timer) {
+    if (map_reload_time != 0) {
+        int time = GetTime();
+        if(time >= map_reload_time) {
+            map_reload_time = time + map_change_delay + map_reload_interval;
+            GFLDM_PrintToChatAll("%t", "Map Restarting in...", map_change_delay);
+            CreateTimer(1.0, Timer_ReloadMap, time + map_change_delay, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+        }
+    }
+}
+
+public Action Timer_ReloadMap(Handle timer, any data) {
+    int change_time = data;
+    int time = GetTime();
+    if (time < change_time) {
+        GFLDM_PrintToChatAll("%t", "Map Restarting in...", change_time - time);
+    } else {
+        char current_map[PLATFORM_MAX_PATH];
+        change_time = time + map_reload_interval;
+        GetCurrentMap(current_map, sizeof(current_map));
+        ForceChangeLevel(current_map, "GFLDM Map Restart");
+        return Plugin_Stop;
+    }
+
+    return Plugin_Continue;
 }
 
 public Action ConCmd_Message(int client, int args) {
