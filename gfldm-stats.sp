@@ -3,6 +3,7 @@
 #include <sourcemod>
 #include <gfldm>
 #include <gfldm-stats>
+#include <gfldm-chat>
 
 public Plugin myinfo = {
     name = "GFLDM Stats",
@@ -14,18 +15,48 @@ public Plugin myinfo = {
 
 PlayerStats playerStats[MAXPLAYERS + 1];
 GlobalForward fwd_statsChange;
+ConVar cvar_allow_reset;
+bool csgo = false;
 
 public void OnPluginStart() {
     DEFINE_VERSION("gfldm_stats_version")
     HookEvent("player_death", EventPlayerDeath);
     HookEvent("player_hurt", EventPlayerHurt);
     HookEvent("weapon_fire", EventWeaponFire);
+
+    cvar_allow_reset = CreateConVar("gfldm_stats_allow_reset", "1", "Allow players to reset their stats");
+    RegConsoleCmd("sm_rs", Cmd_Reset, "Reset your stats for this session");
+
+    LoadTranslations("gfldm_stats.phrases");
+
+    char mod[16];
+    GetGameFolderName(mod, sizeof(mod));
+    csgo = StrEqual(mod, "csgo", false);
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] err, int errmax) {
     fwd_statsChange = new GlobalForward("GFLDM_OnStatsUpdate", ET_Ignore, Param_Cell, Param_Cell, Param_Array);
     CreateNative("GFLDM_WithPlayerStats", Native_WithPlayerStats);
     RegPluginLibrary("gfldm-stats");
+}
+
+public Action Cmd_Reset(int client, int args) {
+    if (cvar_allow_reset.BoolValue && GFLDM_IsValidClient(client)) {
+        PlayerStats zero;
+        playerStats[client] = zero;
+        
+        SetEntProp(client, Prop_Data, "m_iFrags", 0);
+        SetEntProp(client, Prop_Data, "m_iDeaths", 0);
+        if (csgo) {
+            CS_SetClientContributionScore(client, 0);
+            CS_SetClientAssists(client, 0);
+        }
+
+        FireForward(client, STATCLASS_RESET);
+        GFLDM_PrintToChat(client, "%t", "Stats Reset");
+    }
+
+    return Plugin_Handled;
 }
 
 public int Native_WithPlayerStats(Handle plugin, int numParas) {

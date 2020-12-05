@@ -12,7 +12,8 @@
 #define STATCLASS_HIGHEST_STREAK    (1<<6)
 #define STATCLASS_HEADSHOTS         (1<<7)
 #define STATCLASS_HITBOXES          (1<<8)
-#define STATCLASS_DISCONNECT        (1<<24)
+#define STATCLASS_DISCONNECT        0xffffffff
+#define STATCLASS_RESET             STATCLASS_DISCONNECT
 
 enum struct PlayerHitboxStats {
     int head;

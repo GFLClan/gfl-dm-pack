@@ -1,0 +1,7 @@
+"Phrases"
+{
+    "Stats Reset"
+    {
+        "en"            "{normal}[{green}Stats{normal}] Your score has been reset."
+    }
+}
