@@ -31,7 +31,7 @@ public void OnPluginStart() {
     cvar_mapchange_delay = CreateConVar("gfldm_restart_map_delay", "5", "Wait x seconds before reloading the map");
     cvar_mapchange_delay.AddChangeHook(CvarChanged);
 
-    DEFINE_VERSION("gfldm_version")
+    GFLDM_DefineVersion("gfldm_version");
 
     HookEvent("round_start", Event_RoundStart);
     RegConsoleCmd("sm_usermessage", ConCmd_Message);

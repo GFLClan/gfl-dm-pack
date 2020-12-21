@@ -2,13 +2,18 @@
     #endinput
 #endif
 #define _gfldm_included
-#define GFLDM_VERSION "1.5.2"
+#define GFLDM_VERSION "1.6.0"
 
 #include <cstrike>
 
-#define DEFINE_VERSION(%1) \
-    ConVar cvar_version = CreateConVar(%1, GFLDM_VERSION, "",  FCVAR_REPLICATED);\
-    cvar_version.SetString(GFLDM_VERSION);
+stock void GFLDM_DefineVersion(const char[] version_cvar) {
+    ConVar cvar_version = FindConVar(version_cvar);
+    if (cvar_version == null) {
+        CreateConVar(version_cvar, GFLDM_VERSION, "", FCVAR_REPLICATED);
+    } else {
+        cvar_version.SetString(GFLDM_VERSION, true, false);
+    }
+}
 
 stock bool GFLDM_IsValidClient(int client, bots=false) {
     return (0 < client <= MaxClients) && IsClientInGame(client) && ((IsFakeClient(client) && bots) || !IsFakeClient(client));
@@ -25,4 +30,16 @@ stock int GFLDM_GetTeamCount(int team, bots=false) {
     }
 
     return count;
+}
+
+stock void GFLDM_RequireLibrary(const char[] library) {
+    if (!LibraryExists(library)) {
+        SetFailState("Missing GFLDM component: %s", library);
+    }
+}
+
+stock void GFLDM_EmitSound(int client, const char[] sound_file) {
+    if (GFLDM_IsValidClient(client)) {
+        EmitSoundToClient(client, sound_file, client, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 0.5);
+    }
 }

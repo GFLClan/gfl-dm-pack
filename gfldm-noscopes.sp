@@ -22,7 +22,7 @@ bool noscopes_enabled[MAXPLAYERS + 1] = {true, ...};
 Cookie noscopes_cookie;
 
 public void OnPluginStart() {
-    DEFINE_VERSION("gfldm_noscopes_version")
+    GFLDM_DefineVersion("gfldm_noscopes_version");
     if(GetEngineVersion() != Engine_CSGO && GetEngineVersion() != Engine_CSS) {
 		SetFailState("Plugin supports CSS and CS:GO only.");
     }

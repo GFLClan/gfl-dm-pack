@@ -19,7 +19,7 @@ ConVar cvar_allow_reset;
 bool csgo = false;
 
 public void OnPluginStart() {
-    DEFINE_VERSION("gfldm_stats_version")
+    GFLDM_DefineVersion("gfldm_stats_version");
     HookEvent("player_death", EventPlayerDeath);
     HookEvent("player_hurt", EventPlayerHurt);
     HookEvent("weapon_fire", EventWeaponFire);
@@ -35,7 +35,7 @@ public void OnPluginStart() {
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] err, int errmax) {
-    fwd_statsChange = new GlobalForward("GFLDM_OnStatsUpdate", ET_Ignore, Param_Cell, Param_Cell, Param_Array);
+    fwd_statsChange = new GlobalForward("GFLDM_OnStatsUpdate", ET_Ignore, Param_Cell, Param_Cell, Param_Array, Param_Cell);
     CreateNative("GFLDM_WithPlayerStats", Native_WithPlayerStats);
     RegPluginLibrary("gfldm-stats");
 }
@@ -98,8 +98,21 @@ public void EventPlayerDeath(Event event, const char[] name, bool dontBroadcast)
         playerStats[attacker].headshots++;
         stat_class = stat_class | STATCLASS_HEADSHOTS;
     }
+
+    char weapon[64];
+    event.GetString("weapon", weapon, sizeof(weapon));
+    if (StrContains(weapon, "knife") != -1 || 
+        StrEqual(weapon, "weapon_bayonet") || 
+        StrEqual(weapon, "weapon_melee") || 
+        StrEqual(weapon, "weapon_axe") || 
+        StrEqual(weapon, "weapon_hammer") || 
+        StrEqual(weapon, "weapon_spanner") || 
+        StrEqual(weapon, "weapon_fists")) {
+        playerStats[attacker].knifes++;
+        stat_class = stat_class | STATCLASS_KNIFES;
+    }
     
-    FireForward(attacker, stat_class);
+    FireForward(attacker, stat_class, victim);
 }
 
 public void EventPlayerHurt(Event event, const char[] name, bool dontBroadcast) {
@@ -137,7 +150,7 @@ public void EventPlayerHurt(Event event, const char[] name, bool dontBroadcast) 
             playerStats[attacker].hitboxes.right_leg++;
     }
 
-    FireForward(attacker, STATCLASS_ACCURACY | STATCLASS_HITBOXES);
+    FireForward(attacker, STATCLASS_ACCURACY | STATCLASS_HITBOXES, victim);
 }
 
 public void EventWeaponFire(Event event, const char[] name, bool dontBroadcast) {
@@ -174,7 +187,7 @@ public void EventWeaponFire(Event event, const char[] name, bool dontBroadcast) 
 
 public void GFLDM_OnNoscope(int attacker, int victim, bool headshot, float distance) {
     playerStats[attacker].noscopes++;
-    FireForward(attacker, STATCLASS_NOSCOPES);
+    FireForward(attacker, STATCLASS_NOSCOPES, victim);
 }
 
 public void OnClientDisconnect(int client) {
@@ -183,7 +196,7 @@ public void OnClientDisconnect(int client) {
     FireForward(client, STATCLASS_DISCONNECT);
 }
 
-void FireForward(int client, int stat_class) {
+void FireForward(int client, int stat_class, int victim=0) {
     PlayerStats stats;
     stats = playerStats[client];
 
@@ -191,5 +204,6 @@ void FireForward(int client, int stat_class) {
     Call_PushCell(client);
     Call_PushCell(stat_class);
     Call_PushArray(stats, sizeof(stats));
+    Call_PushCell(victim);
     Call_Finish();
 }

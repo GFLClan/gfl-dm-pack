@@ -1,0 +1,94 @@
+"SoundSet"
+{
+    "KillStreaks"
+    {
+        "4"
+        {
+            "SoundFile"     "quake/standard/dominating.mp3"
+            "Announce"      "all"
+        }
+        "5"
+        {
+            "SoundFile"     "quake/standard/killingspree.mp3"
+            "Announce"      "all"
+        }
+        "6"
+        {
+            "SoundFile"     "quake/standard/rampage.mp3"
+            "Announce"      "all"
+        }
+        "10"
+        {
+            "SoundFile"     "quake/standard/monsterkill.mp3"
+            "Announce"      "all"
+        }
+		"14"
+		{
+            "SoundFile"		"quake/standard/unstoppable.mp3"
+			"Announce"		"all"
+		}
+		"16"
+		{
+			"SoundFile"		"quake/standard/ultrakill.mp3"
+			"Announce"		"all"
+		}
+		"18"
+		{
+			"SoundFile"		"quake/standard/godlike.mp3"
+			"Announce"		"all"
+		}
+		"20"
+		{
+			"SoundFile"		"quake/standard/wickedsick.mp3"
+			"Announce"		"all"
+		}
+		"22"
+		{
+			"SoundFile"		"quake/standard/impressive.mp3"
+			"Announce"		"all"
+		}
+		"24"
+		{
+			"SoundFile"		"quake/standard/ludicrouskill.mp3"
+			"Announce"		"all"
+		}
+		"26"
+		{
+			"SoundFile"		"quake/standard/holyshit.mp3"
+			"Announce"		"all"
+		}	
+    }
+    "SpecialChains"
+    {
+        "Hattrick"
+        {
+            "SoundFile"     "quake/standard/hattrick.wav"
+            "Announce"      "all"
+        }
+        "Headhunter"
+        {
+            "SoundFile"     "quake/standard/headhunter.wav"
+            "Announce"      "all"
+        }
+        "DeagleSpree"
+        {
+            "SoundFile"     "quake/standard/ownage.wav"
+            "Announce"      "all"
+        }
+        "Collateral"
+        {
+            "SoundFile"     "quake/standard/multikill.wav"
+            "Announce"      "all"
+        }
+    }
+    "Headshot"
+    {
+        "SoundFile"		"quake/standard/headshot.mp3"
+        "Announce"		"participants"
+    }
+    "Knife"
+    {
+        "SoundFile"		"quake/standard/humiliation.mp3"
+        "Announce"		"all"
+    }
+}

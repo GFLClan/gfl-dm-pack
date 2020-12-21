@@ -21,7 +21,7 @@ float last_update[MAXPLAYERS + 1] = {0.0, ...};
 Cookie enabled_cookie;
 
 public void OnPluginStart() {
-    DEFINE_VERSION("gfldm_hitboxes_version")
+    GFLDM_DefineVersion("gfldm_hitboxes_version");
     cvar_hitbox_show_on_spawn = CreateConVar("gfldm_hitboxme_on_spawn", "1", "Show hitbox stats on spawn");
     cvar_hitbox_show_on_spawn.AddChangeHook(CvarChanged);
     enabled_cookie = new Cookie("gfldm-showhitboxes", "", CookieAccess_Protected);

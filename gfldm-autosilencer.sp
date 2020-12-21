@@ -19,7 +19,7 @@ bool spawning[MAXPLAYERS + 1] = {false, ...};
 Cookie enabled_cookie;
 
 public void OnPluginStart() {
-    DEFINE_VERSION("gfldm_autosilencer_version")
+    GFLDM_DefineVersion("gfldm_autosilencer_version");
     for (int c = 1; c <= MaxClients; c++) {
         if (GFLDM_IsValidClient(c)) {
             OnClientPutInServer(c);

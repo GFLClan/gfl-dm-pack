@@ -21,7 +21,7 @@ enum struct ReloadValues {
 StringMap weapon_config;
 
 public OnPluginStart() {
-    DEFINE_VERSION("gfldm_autoreload_version")
+    GFLDM_DefineVersion("gfldm_autoreload_version");
     weapon_config = new StringMap();
     HookEvent("player_death", Event_PlayerDeath);
 }

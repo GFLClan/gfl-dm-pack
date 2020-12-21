@@ -12,6 +12,7 @@
 #define STATCLASS_HIGHEST_STREAK    (1<<6)
 #define STATCLASS_HEADSHOTS         (1<<7)
 #define STATCLASS_HITBOXES          (1<<8)
+#define STATCLASS_KNIFES            (1<<9)
 #define STATCLASS_DISCONNECT        0xffffffff
 #define STATCLASS_RESET             STATCLASS_DISCONNECT
 
@@ -41,6 +42,7 @@ enum struct PlayerStats {
     int kills;
     int headshots;
     int noscopes;
+    int knifes;
     int deaths;
     int current_streak;
     int highest_streak;
@@ -52,6 +54,7 @@ enum struct PlayerStats {
         this.kills = 0;
         this.headshots = 0;
         this.noscopes = 0;
+        this.knifes = 0;
         this.deaths = 0;
         this.current_streak = 0;
         this.highest_streak = 0;
@@ -61,4 +64,4 @@ enum struct PlayerStats {
 
 typedef StatFunction = function void (int client, PlayerStats stats);
 native void GFLDM_WithPlayerStats(int client, StatFunction callback);
-forward void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats);
+forward void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats, int victim);

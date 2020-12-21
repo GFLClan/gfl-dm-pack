@@ -21,7 +21,7 @@ bool spawn_sounds = false;
 bool kill_sounds = false;
 
 public void OnPluginStart() {
-    DEFINE_VERSION("gfldm_sounds_version")
+    GFLDM_DefineVersion("gfldm_sounds_version");
     cvar_block_sounds = CreateConVar("gfldm_block_sounds", "1", "Blocks itempickup sounds");
     cvar_spawn_sounds = CreateConVar("gfldm_spawn_sounds", "1", "Emit sound from players after spawn");
     cvar_kill_sounds = CreateConVar("gfldm_kill_sounds", "1", "Emit sound to player on kills");

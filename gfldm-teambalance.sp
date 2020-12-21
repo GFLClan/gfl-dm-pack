@@ -16,7 +16,7 @@ ConVar cvar_max_diff;
 int max_diff = 2;
 
 public void OnPluginStart() {
-    DEFINE_VERSION("gfldm_teambalance_version")
+    GFLDM_DefineVersion("gfldm_teambalance_version");
     HookEvent("player_death", OnPlayerDeath);
     cvar_max_diff = CreateConVar("gfldm_teambalance_max_diff", "2", "Maximum team difference allowed before players are balanced");
     cvar_max_diff.AddChangeHook(Cvar_ConfigChanged);

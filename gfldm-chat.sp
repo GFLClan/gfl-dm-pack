@@ -14,7 +14,7 @@ public Plugin myinfo = {
 };
 
 public void OnPluginStart() {
-    DEFINE_VERSION("gfldm_chat_version")
+    GFLDM_DefineVersion("gfldm_chat_version");
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {

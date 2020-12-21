@@ -22,12 +22,14 @@ int smoke_sprite;
 int admin_flags = 0;
 ConVar cvar_admin_flag;
 
-#define EXPLODE_SOUND	"ambient/explosions/explode_8.wav"
+#define EXPLODE_SOUND          "ambient/explosions/explode_8.wav"
 
 public void OnPluginStart() {
-    DEFINE_VERSION("gfldm_hsexplode_version")
+    GFLDM_DefineVersion("gfldm_hsexplode_version");
+    
     cvar_admin_flag = CreateConVar("gfldm_hsexplode_flag", "t", "Admin flags required to enable HS explosions");
-    cvar_admin_flag.AddChangeHook(cvar_FlagsChanged);
+    cvar_admin_flag.AddChangeHook(cvar_Changed);
+
     RegConsoleCmd("sm_hsexplode", Cmd_HSExplode, "Toggle headshot explosions");
 
     enabled_cookie = new Cookie("GFLDM_HSExplode", "", CookieAccess_Protected);
@@ -55,8 +57,8 @@ public Action Cmd_HSExplode(int client, int args) {
     return Plugin_Handled;
 }
 
-public void cvar_FlagsChanged(ConVar cvar, const char[] oldValue, const char[] newValue) {
-    admin_flags = ReadFlagString(newValue);
+public void cvar_Changed(ConVar cvar, const char[] oldValue, const char[] newValue) {
+    OnConfigsExecuted();
 }
 
 public void OnConfigsExecuted() {

@@ -49,7 +49,7 @@ Handle timer_cycle;
 
 
 public OnPluginStart() {
-    DEFINE_VERSION("gfldm_livestats_version")
+    GFLDM_DefineVersion("gfldm_livestats_version");
 
     HookEvent("player_spawn", Event_PlayerSpawn);
     RegConsoleCmd("sm_livestats", Cmd_LiveStats);
@@ -78,9 +78,7 @@ public void CvarChanged(ConVar cvar, const char[] oldVlue, const char[] newValue
 }
 
 public void OnAllPluginsLoaded() {
-    if (!LibraryExists("gfldm-stats")) {
-        SetFailState("gfldm-stats Required");
-    }
+    GFLDM_RequireLibrary("gfldm-stats");
     noscopesEnabled = LibraryExists("gfldm-noscopes");
 }
 
@@ -245,7 +243,7 @@ bool RenderLine_Streak(int j, char[] line, int maxsize) {
     return false;
 }
 
-public void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats) {
+public void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats, int victim) {
     StatsEntry new_entry;
     new_entry.client = client;
     new_entry.stats = stats;
