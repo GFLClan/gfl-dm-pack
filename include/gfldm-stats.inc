@@ -13,6 +13,10 @@
 #define STATCLASS_HEADSHOTS         (1<<7)
 #define STATCLASS_HITBOXES          (1<<8)
 #define STATCLASS_KNIFES            (1<<9)
+#define STATCLASS_COLLATERAL        (1<<10)
+#define STATCLASS_ONE_DEAG          (1<<11)
+#define STATCLASS_AWP_OSOK          (1<<12)
+#define STATCLASS_SCOUT_OSOK        (1<<13)
 #define STATCLASS_DISCONNECT        0xffffffff
 #define STATCLASS_RESET             STATCLASS_DISCONNECT
 
@@ -36,6 +40,14 @@ enum struct PlayerHitboxStats {
     }
 }
 
+enum struct Shot {
+    float time;
+    bool hit;
+    bool kill;
+    bool headshot;
+    char weapon[32];
+}
+
 enum struct PlayerStats {
     int shots;
     int hits;
@@ -46,6 +58,8 @@ enum struct PlayerStats {
     int deaths;
     int current_streak;
     int highest_streak;
+    float last_shot;
+    float last_kill;
     PlayerHitboxStats hitboxes;
 
     void Reset() {
@@ -64,4 +78,4 @@ enum struct PlayerStats {
 
 typedef StatFunction = function void (int client, PlayerStats stats);
 native void GFLDM_WithPlayerStats(int client, StatFunction callback);
-forward void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats, int victim);
+forward void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats, int[] victims, int victim_count);

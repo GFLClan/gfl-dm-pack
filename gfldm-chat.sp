@@ -21,6 +21,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("GFLDM_PrintToChatAll", native_PrintToChatAll);
     CreateNative("GFLDM_PrintToChatFilter", native_PrintToChatFilter);
     CreateNative("GFLDM_PrintToChat", native_PrintToChat);
+    RegPluginLibrary("gfldm-chat");
 }
 
 public int native_PrintToChatAll(Handle caller, int numParams) {

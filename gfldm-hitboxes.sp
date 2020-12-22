@@ -73,7 +73,7 @@ public Action Cmd_HitboxMe(int client, int args) {
 
 public void GFLDM_OnStatsUpdate(int client, int stat_class, PlayerStats stats) {
     if (stat_class & STATCLASS_HITBOXES != 0) {
-        if (hitboxes_enabled[client]) {
+        if (hitboxes_enabled[client] && GFLDM_IsValidClient(client)) {
             Callback_PlayerStats(client, stats);
         }
     }

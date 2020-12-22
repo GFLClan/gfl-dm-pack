@@ -5,6 +5,7 @@
 #include <gfldm>
 #include <gfldm-chat>
 #include <gfldm-clientprefs>
+#include <gfldm-anim>
 
 public Plugin myinfo = {
     name = "GFLDM Headshot Explode",
@@ -16,13 +17,9 @@ public Plugin myinfo = {
 
 bool explosions_enabled[MAXPLAYERS + 1] = {true, ...};
 Cookie enabled_cookie;
-int explosion_sprite;
-int smoke_sprite;
 
 int admin_flags = 0;
 ConVar cvar_admin_flag;
-
-#define EXPLODE_SOUND          "ambient/explosions/explode_8.wav"
 
 public void OnPluginStart() {
     GFLDM_DefineVersion("gfldm_hsexplode_version");
@@ -69,12 +66,6 @@ public void OnConfigsExecuted() {
 
 LOAD_COOKIE_BOOL(enabled_cookie, explosions_enabled, "on", true)
 
-public void OnMapStart() {
-    PrecacheSound(EXPLODE_SOUND, true);
-    explosion_sprite = PrecacheModel("sprites/blueglow2.vmt");
-    smoke_sprite = PrecacheModel("sprites/steam1.vmt");
-}
-
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
     int victim = GetClientOfUserId(event.GetInt("userid"));
     int attacker = GetClientOfUserId(event.GetInt("attacker"));
@@ -91,15 +82,10 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 
     if (event.GetBool("headshot") && explosions_enabled[attacker]) {
         float origin[3];
-        float normal[3] = {0.0, 0.0, 1.0};
         GetClientAbsOrigin(victim, origin);
 
-        TE_SetupExplosion(origin, explosion_sprite, 5.0, 1, 0, 50, 40, normal);
-        TE_SendToAll();
-
-        TE_SetupSmoke(origin, smoke_sprite, 10.0, 3);
-        TE_SendToAll();
-
-        EmitAmbientSound(EXPLODE_SOUND, origin, victim, SNDLEVEL_NORMAL);
+        GFLDMAnimation anim = new GFLDMAnimation();
+        anim.AddExplosion(ExplosionNormal, origin);
+        anim.Play();
     }
 }

@@ -2,7 +2,7 @@
 {
     "KillStreaks"
     {
-        "4"
+        "3"
         {
             "SoundFile"     "quake/standard/dominating.mp3"
             "Announce"      "all"
@@ -12,7 +12,7 @@
             "SoundFile"     "quake/standard/killingspree.mp3"
             "Announce"      "all"
         }
-        "6"
+        "8"
         {
             "SoundFile"     "quake/standard/rampage.mp3"
             "Announce"      "all"
@@ -60,24 +60,39 @@
     }
     "SpecialChains"
     {
+        // 3 headshots within 3 seconds of eath other
         "Hattrick"
         {
             "SoundFile"     "quake/standard/hattrick.wav"
             "Announce"      "all"
         }
+        // 4 headshots within 3 seconds of eath other
         "Headhunter"
         {
             "SoundFile"     "quake/standard/headhunter.wav"
             "Announce"      "all"
         }
+        // 3 one deags within 3 seconds of each other
         "DeagleSpree"
         {
             "SoundFile"     "quake/standard/ownage.wav"
             "Announce"      "all"
         }
+        // 6 shots 6 kills with the AWP within 6 seconds of each other
+        "AwpElite"
+        {
+            "SoundFile"		"quake/standard/unstoppable.mp3"
+			"Announce"		"all"
+        }
+        // 6 shots 6 kills with the scout within 6 seconds of each other
+        "ScoutElite"
+        {
+            "SoundFile"		"quake/standard/holyshit.mp3"
+			"Announce"		"all"
+        }
         "Collateral"
         {
-            "SoundFile"     "quake/standard/multikill.wav"
+            "SoundFile"     "quake/standard/multikill.mp3"
             "Announce"      "all"
         }
     }

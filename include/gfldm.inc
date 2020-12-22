@@ -15,7 +15,7 @@ stock void GFLDM_DefineVersion(const char[] version_cvar) {
     }
 }
 
-stock bool GFLDM_IsValidClient(int client, bots=false) {
+stock bool GFLDM_IsValidClient(int client, bool bots=false) {
     return (0 < client <= MaxClients) && IsClientInGame(client) && ((IsFakeClient(client) && bots) || !IsFakeClient(client));
 }
 

@@ -243,7 +243,7 @@ bool RenderLine_Streak(int j, char[] line, int maxsize) {
     return false;
 }
 
-public void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats, int victim) {
+public void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats, int[] victims, int victim_count) {
     StatsEntry new_entry;
     new_entry.client = client;
     new_entry.stats = stats;

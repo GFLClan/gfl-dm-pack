@@ -14,9 +14,23 @@ public Plugin myinfo = {
 };
 
 PlayerStats playerStats[MAXPLAYERS + 1];
+bool pendingFrameCallback[MAXPLAYERS + 1];
+int pendingFrameClass[MAXPLAYERS + 1];
+int victimsThisFrame[MAXPLAYERS + 1][6];
+int victimCount[MAXPLAYERS + 1];
+Shot playerShots[MAXPLAYERS + 1][6];
+Shot shotThisFrame[MAXPLAYERS + 1];
+
 GlobalForward fwd_statsChange;
 ConVar cvar_allow_reset;
 bool csgo = false;
+
+float current_frame_time;
+
+// OnGameFrame is called at the start of simulating the current tick
+public void OnGameFrame() {
+    current_frame_time = GetTickedTime();
+}
 
 public void OnPluginStart() {
     GFLDM_DefineVersion("gfldm_stats_version");
@@ -35,7 +49,7 @@ public void OnPluginStart() {
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] err, int errmax) {
-    fwd_statsChange = new GlobalForward("GFLDM_OnStatsUpdate", ET_Ignore, Param_Cell, Param_Cell, Param_Array, Param_Cell);
+    fwd_statsChange = new GlobalForward("GFLDM_OnStatsUpdate", ET_Ignore, Param_Cell, Param_Cell, Param_Array, Param_Array, Param_Cell);
     CreateNative("GFLDM_WithPlayerStats", Native_WithPlayerStats);
     RegPluginLibrary("gfldm-stats");
 }
@@ -52,7 +66,7 @@ public Action Cmd_Reset(int client, int args) {
             CS_SetClientAssists(client, 0);
         }
 
-        FireForward(client, STATCLASS_RESET);
+        ScheduleFrameCallback(client, STATCLASS_RESET);
         GFLDM_PrintToChat(client, "%t", "Stats Reset");
     }
 
@@ -84,23 +98,34 @@ public void EventPlayerDeath(Event event, const char[] name, bool dontBroadcast)
 
     playerStats[victim].deaths++;
     playerStats[victim].current_streak = 0;
-    FireForward(victim, STATCLASS_DEATHS | STATCLASS_KDR);
+    ScheduleFrameCallback(victim, STATCLASS_DEATHS | STATCLASS_KDR);
 
     int stat_class = STATCLASS_KILLS | STATCLASS_KDR | STATCLASS_STREAK;
     playerStats[attacker].kills++;
     playerStats[attacker].current_streak++;
+    
+    if (playerStats[attacker].last_kill == current_frame_time) {
+        stat_class = stat_class | STATCLASS_COLLATERAL;
+    }
+
     if (playerStats[attacker].current_streak > playerStats[attacker].highest_streak) {
         playerStats[attacker].highest_streak++;
         stat_class = stat_class | STATCLASS_HIGHEST_STREAK;
     }
 
+    char weapon[64];
+    event.GetString("weapon", weapon, sizeof(weapon));
+    strcopy(shotThisFrame[attacker].weapon, 32, weapon);
+    shotThisFrame[attacker].hit = true;
+    shotThisFrame[attacker].kill = true;
+    shotThisFrame[attacker].time = current_frame_time;
+    
     if (event.GetBool("headshot")) {
         playerStats[attacker].headshots++;
         stat_class = stat_class | STATCLASS_HEADSHOTS;
+        shotThisFrame[attacker].headshot = true;
     }
 
-    char weapon[64];
-    event.GetString("weapon", weapon, sizeof(weapon));
     if (StrContains(weapon, "knife") != -1 || 
         StrEqual(weapon, "weapon_bayonet") || 
         StrEqual(weapon, "weapon_melee") || 
@@ -111,8 +136,10 @@ public void EventPlayerDeath(Event event, const char[] name, bool dontBroadcast)
         playerStats[attacker].knifes++;
         stat_class = stat_class | STATCLASS_KNIFES;
     }
-    
-    FireForward(attacker, stat_class, victim);
+
+    playerStats[attacker].last_kill = current_frame_time;
+    RecordVictim(attacker, victim);
+    ScheduleFrameCallback(attacker, stat_class);
 }
 
 public void EventPlayerHurt(Event event, const char[] name, bool dontBroadcast) {
@@ -123,6 +150,7 @@ public void EventPlayerHurt(Event event, const char[] name, bool dontBroadcast) 
         return;
     }
 
+    
     int hitgroup = event.GetInt("hitgroup");
     if (hitgroup == 0) {
         return;
@@ -131,6 +159,12 @@ public void EventPlayerHurt(Event event, const char[] name, bool dontBroadcast) 
     if (hitgroup == 8) {
         hitgroup = 1;
     }
+
+    char weapon[64];
+    event.GetString("weapon", weapon, sizeof(weapon));
+    strcopy(shotThisFrame[attacker].weapon, 32, weapon);
+    shotThisFrame[attacker].hit = true;
+    shotThisFrame[attacker].time = GetGameTime();
 
     playerStats[attacker].hits++;
     switch (hitgroup) {
@@ -150,7 +184,7 @@ public void EventPlayerHurt(Event event, const char[] name, bool dontBroadcast) 
             playerStats[attacker].hitboxes.right_leg++;
     }
 
-    FireForward(attacker, STATCLASS_ACCURACY | STATCLASS_HITBOXES, victim);
+    ScheduleFrameCallback(attacker, STATCLASS_ACCURACY | STATCLASS_HITBOXES);
 }
 
 public void EventWeaponFire(Event event, const char[] name, bool dontBroadcast) {
@@ -181,22 +215,93 @@ public void EventWeaponFire(Event event, const char[] name, bool dontBroadcast) 
         return;
     }
 
+    strcopy(shotThisFrame[client].weapon, 32, weapon);
+    shotThisFrame[client].time = current_frame_time;
+
     playerStats[client].shots++;
-    FireForward(client, STATCLASS_ACCURACY);
+    playerStats[client].last_shot = current_frame_time;
+    ScheduleFrameCallback(client, STATCLASS_ACCURACY);
 }
 
 public void GFLDM_OnNoscope(int attacker, int victim, bool headshot, float distance) {
     playerStats[attacker].noscopes++;
-    FireForward(attacker, STATCLASS_NOSCOPES, victim);
+    RecordVictim(attacker, victim);
+    ScheduleFrameCallback(attacker, STATCLASS_NOSCOPES);
+}
+
+void RecordVictim(int client, int victim) {
+    if (victimCount[client] < 6) {
+        victimsThisFrame[client][victimCount[client]] = victim;
+        victimCount[client]++;
+    }
 }
 
 public void OnClientDisconnect(int client) {
     PlayerStats zero;
     playerStats[client] = zero;
-    FireForward(client, STATCLASS_DISCONNECT);
+    ScheduleFrameCallback(client, STATCLASS_DISCONNECT);
 }
 
-void FireForward(int client, int stat_class, int victim=0) {
+void ScheduleFrameCallback(int client, int stat_class) {
+    if (!pendingFrameCallback[client]) {
+        RequestFrame(Frame_FireForward, client);
+        pendingFrameCallback[client] = true;
+    }
+    pendingFrameClass[client] = pendingFrameClass[client] | stat_class;
+}
+
+void Frame_FireForward(any data) {
+    int client = data;
+    
+    ResolveFrameShot(client);
+    FireForward(client, pendingFrameClass[client], victimsThisFrame[client], victimCount[client]);
+
+    ClearFrameData(client);
+}
+
+void ResolveFrameShot(int client) {
+    if (pendingFrameClass[client] & STATCLASS_ACCURACY == 0 || pendingFrameClass[client] == STATCLASS_DISCONNECT) {
+        return;
+    }
+
+    if (playerStats[client].shots == 1) {
+        if (StrEqual(shotThisFrame[client].weapon, "deagle") && shotThisFrame[client].headshot && shotThisFrame[client].kill) {
+            pendingFrameClass[client] = pendingFrameClass[client] | STATCLASS_ONE_DEAG;
+        } else if (StrEqual(shotThisFrame[client].weapon, "awp") && shotThisFrame[client].kill) {
+            pendingFrameClass[client] = pendingFrameClass[client] | STATCLASS_AWP_OSOK;
+        } else if (StrEqual(shotThisFrame[client].weapon, "scout") && shotThisFrame[client].kill) {
+            pendingFrameClass[client] = pendingFrameClass[client] | STATCLASS_SCOUT_OSOK;
+        }
+    } else {
+        int shot_idx = (playerStats[client].shots - 1) % 6;
+        if (StrEqual(shotThisFrame[client].weapon, "deagle") && shotThisFrame[client].headshot && shotThisFrame[client].kill) {
+            if (playerShots[client][shot_idx].kill || ((current_frame_time - playerShots[client][shot_idx].time) > 3.0)) {
+                pendingFrameClass[client] = pendingFrameClass[client] | STATCLASS_ONE_DEAG;
+            }
+        } else if (StrEqual(shotThisFrame[client].weapon, "awp") && shotThisFrame[client].kill) {
+            if (playerShots[client][shot_idx].kill || (current_frame_time - playerShots[client][shot_idx].time) > 6.0) {
+                pendingFrameClass[client] = pendingFrameClass[client] | STATCLASS_AWP_OSOK;
+            }
+        } else if (StrEqual(shotThisFrame[client].weapon, "scout") && shotThisFrame[client].kill) {
+            if (playerShots[client][shot_idx].kill || (current_frame_time - playerShots[client][shot_idx].time) > 6.0) {
+                pendingFrameClass[client] = pendingFrameClass[client] | STATCLASS_SCOUT_OSOK;
+            }
+        }
+    }
+
+    playerShots[client][playerStats[client].shots % 6] = shotThisFrame[client];
+}
+
+void ClearFrameData(int client) {
+    pendingFrameCallback[client] = false;
+    pendingFrameClass[client] = 0;
+    victimsThisFrame[client] = {0, 0, 0, 0, 0, 0};
+    victimCount[client] = 0;
+    Shot zero;
+    shotThisFrame[client] = zero;
+}
+
+void FireForward(int client, int stat_class, int[] victims, int clientVictimCount) {
     PlayerStats stats;
     stats = playerStats[client];
 
@@ -204,6 +309,7 @@ void FireForward(int client, int stat_class, int victim=0) {
     Call_PushCell(client);
     Call_PushCell(stat_class);
     Call_PushArray(stats, sizeof(stats));
-    Call_PushCell(victim);
+    Call_PushArray(victims, clientVictimCount);
+    Call_PushCell(clientVictimCount);
     Call_Finish();
 }
