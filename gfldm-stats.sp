@@ -239,6 +239,10 @@ void RecordVictim(int client, int victim) {
 public void OnClientDisconnect(int client) {
     PlayerStats zero;
     playerStats[client] = zero;
+    for (int c = 0; c < 6; c++) {
+        Shot zeroShot;
+        playerShots[client][c] = zeroShot;
+    }
     ScheduleFrameCallback(client, STATCLASS_DISCONNECT);
 }
 

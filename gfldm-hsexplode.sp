@@ -84,8 +84,8 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
         float origin[3];
         GetClientAbsOrigin(victim, origin);
 
-        GFLDMAnimation anim = new GFLDMAnimation();
-        anim.AddExplosion(ExplosionNormal, origin);
+        GFLDMAnimation anim = GFLDM_StartAnimAll();
+        anim.AddExplosion(origin);
         anim.Play();
     }
 }

@@ -7,6 +7,10 @@
 #include <gfldm-chat>
 #include <gfldm-anim>
 
+#define THUNDER_STRIKE_ROLLING "gfldm/thunder1.mp3"
+#define THUNDER_ROLLING        "gfldm/thunder2.mp3"
+#define THUNDER_STRIKE         "gfldm/thunder3.mp3"
+
 public Plugin myinfo = {
     name = "GFLDM Quake Sounds",
     author = "Dreae",
@@ -70,7 +74,21 @@ public void OnAllPluginsLoaded() {
 }
 
 public void OnMapStart() {
+    CacheSound(THUNDER_ROLLING);
+    CacheSound(THUNDER_STRIKE);
+    CacheSound(THUNDER_STRIKE_ROLLING);
+
     LoadSoundSets();
+}
+
+void CacheSound(const char[] sound) {
+    if (PrecacheSound(sound, true)) {
+        char path[PLATFORM_MAX_PATH];
+        Format(path, sizeof(path), "sound/%s", sound);
+        AddFileToDownloadsTable(path);
+    } else {
+        LogError("Error caching sound %s", sound);
+    }
 }
 
 void LoadSoundSets() {
@@ -78,10 +96,12 @@ void LoadSoundSets() {
     char filename[PLATFORM_MAX_PATH];
     FileType file_type;
     while (configs.GetNext(filename, PLATFORM_MAX_PATH, file_type)) {
-        SoundSet set;
-        set.kill_streaks = new ArrayList(512);
         if (file_type == FileType_File) {
             char config_path[PLATFORM_MAX_PATH];
+            SoundSet set;
+            set.kill_streaks = new ArrayList(512);
+            char set_name[64];
+
             BuildPath(Path_SM, config_path, sizeof(config_path), "configs/gfl-quake/%s", filename);
             LogMessage("Parsing SoundSet %s", config_path);
             KeyValues kv = new KeyValues("SoundSet");
@@ -128,12 +148,20 @@ void LoadSoundSets() {
                     } while(kv.GotoNextKey());
 
                     kv.GoBack();
+                } else if (StrEqual(buffer, "Name", false)) {
+                    kv.GetString(NULL_STRING, set_name, sizeof(set_name));
+                    PrintToServer("Got name %s", set_name);
                 }
             } while(kv.GotoNextKey(false));
 
             delete kv;
+
+            if (strlen(set_name) == 0) {
+                LogError("Error parsing SoundSet file %s, you must provide a Name", filename);
+            } else {
+                sound_set_map.SetArray(set_name, set, sizeof(set));
+            }
         }
-        sound_set_map.SetArray("standard", set, sizeof(set));
     }
 }
 
@@ -145,7 +173,7 @@ bool ParseSoundConfig(KeyValues kv, SoundConfig config) {
         return false;
     } else {
         char buffer[32];
-        PrecacheSound(config.sound_file, true);
+        CacheSound(config.sound_file);
         kv.GetString("Announce", buffer, sizeof(buffer));
         config.announce = ParseAnnounceValue(buffer);
     }
@@ -220,9 +248,8 @@ public void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats, 
 
 Action Announce_Collat(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
     if (stats_class & STATCLASS_COLLATERAL) {
-        if (OptionalEmit(client, attacker, victims, victim_count, sound_set.collateral.announce, sound_set.collateral.sound_file)) {
-            return Plugin_Stop;
-        }
+        PlayAnim_Collat(client, victims, victim_count);
+        return OptionalAnnounce(client, attacker, victims, victim_count, sound_set.collateral);
     }
 
     return Plugin_Continue;
@@ -234,9 +261,7 @@ Action Announce_Streak(int client, SoundSet sound_set, int stats_class, PlayerSt
             KillStreakConfig kill_streak;
             sound_set.kill_streaks.GetArray(c, kill_streak, sizeof(kill_streak));
             if (kill_streak.kills_req == stats.current_streak) {
-                if(OptionalEmit(client, attacker, victims, victim_count, kill_streak.sound_config.announce, kill_streak.sound_config.sound_file)) {
-                    return Plugin_Stop;
-                }
+                return OptionalAnnounce(client, attacker, victims, victim_count, kill_streak.sound_config);
             }
         }
     }
@@ -246,27 +271,55 @@ Action Announce_Streak(int client, SoundSet sound_set, int stats_class, PlayerSt
 
 Action Announce_Headshot(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
     if (stats_class & STATCLASS_HEADSHOTS) {
-        if(OptionalEmit(client, attacker, victims, victim_count, sound_set.headshot.announce, sound_set.headshot.sound_file)) {
-            return Plugin_Stop;
-        }
+        return OptionalAnnounce(client, attacker, victims, victim_count, sound_set.headshot);
     }
 
     return Plugin_Continue;
 }
 
-bool OptionalEmit(int client, int attacker, int[] victims, int victim_count, AnnouncementConfig announce, const char[] sound_file) {
+Action OptionalAnnounce(int client, int attacker, int[] victims, int victim_count, SoundConfig config) {
     if (
-        announce == AnnounceAll
-        || (announce == AnnounceParticipants && (client == attacker || IsClientVictim(client, victims, victim_count)))
-        || (announce == AnnounceVictim && IsClientVictim(client, victims, victim_count))
-        || (announce == AnnounceAttacker && client == attacker)
+        config.announce == AnnounceAll
+        || (config.announce == AnnounceParticipants && (client == attacker || IsClientVictim(client, victims, victim_count)))
+        || (config.announce == AnnounceVictim && IsClientVictim(client, victims, victim_count))
+        || (config.announce == AnnounceAttacker && client == attacker)
 
     ) {
-        GFLDM_EmitSound(client, sound_file);
-        return true;
+        GFLDM_EmitSound(client, config.sound_file);
+        return Plugin_Stop;
     }
 
-    return false;
+    return Plugin_Continue;
+}
+
+void PlayAnim_Collat(int client, int[] victims, int victim_count) {
+    GFLDMAnimation anim = GFLDM_StartAnimOne(client);
+    for (int i = 0, j = 1; j < victim_count; i++, j++) {
+        float start[3], end[3];
+        if (!GFLDM_IsValidClient(victims[i], true) || !GFLDM_IsValidClient(victims[j], true)) {
+            continue;
+        }
+
+        GetClientAbsOrigin(victims[i], start);
+        GetClientAbsOrigin(victims[j], end);
+        start[2] = start[2] - 35.0;
+        end[2] = end[2] - 35.0;
+        anim.AddLightning(start, end, 0.08);
+    }
+
+    if (GFLDM_IsValidClient(victims[victim_count - 1], true)) {
+        float start[3], end[3];
+        GetClientAbsOrigin(victims[victim_count - 1], end);
+
+        end[2] = end[2] - 35.0;
+        start[0] = end[0] + GetRandomFloat(-125.0, 125.0); 
+        start[1] = end[1] + GetRandomFloat(-125.0, 125.0);
+        start[2] = end[2] + 700.0;
+        anim.AddLightning(start, end);
+        anim.AddExplosion(end);
+        anim.AddAmbientSound(end, THUNDER_STRIKE_ROLLING, _, SNDLEVEL_GUNFIRE);
+    }
+    anim.Play();
 }
 
 bool IsClientVictim(int client, int[] victims, int victim_count) {
@@ -280,6 +333,6 @@ bool IsClientVictim(int client, int[] victims, int victim_count) {
 }
 
 bool GetClientSoundSet(int client, SoundSet target_sound_set) {
-    sound_set_map.GetArray("standard", target_sound_set, sizeof(target_sound_set));
+    sound_set_map.GetArray("Standard", target_sound_set, sizeof(target_sound_set));
     return true;
 }
