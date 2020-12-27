@@ -1,0 +1,56 @@
+"Phrases"
+{
+    "Kill Streak"
+    {
+        "#format"       "{1:N},{2:d}"
+        "en"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {normal}is on a {green}{2} {normal}kill streak."
+    }
+
+    "Headhunter"
+    {
+        "#format"       "{1:N}"
+        "en"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {normal}is a {green}Headhunter"
+    }
+
+    "Hattrick"
+    {
+        "#format"       "{1:N}"
+        "en"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {green}Hattrick"
+    }
+
+    "Scout Elite"
+    {
+        "#format"       "{1:N}"
+        "en"            "{normal}[{green}!quake{normal}] Holy shit! {teamcolor[1]}{1} {normal}is a {green}Scout Elite"
+    }
+    
+    "Awp Elite"
+    {
+        "#format"       "{1:N}"
+        "en"            "{normal}[{green}!quake{normal}] Unstoppable! {teamcolor[1]}{1} {normal}is an {green}AWP Elite"
+    }
+    
+    "Collateral"
+    {
+        "#format"       "{1:N}"
+        "en"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {normal}got a {green}collateral"
+    }
+
+    "Deagle Spree"
+    {
+        "#format"       "{1:N}"
+        "en"            "{normal}[{green}!quake{normal}] Ownage. {teamcolor[1]}{1} {normal}is on a {green}one deag {normal}spree."
+    }
+
+    
+
+    "Quake enabled"
+    {
+        "en"            "{normal}[{green}!quake{normal}] Quake sounds {green}enabled{normal}."
+    }
+    
+    "Quake disabled"
+    {
+        "en"            "{normal}[{green}!quake{normal}] Quake sounds {green}disabled{normal}."
+    }
+}
