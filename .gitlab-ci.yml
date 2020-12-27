@@ -5,8 +5,8 @@ image:
 build:
   script:
   - dnf -y install make
-  - cp include/*.inc /sourcemod/scripting/include
-  - make CC=/sourcemod/scripting/spcomp all
+  - mkdir compiled
+  - make CC=/sourcemod/scripting/spcomp INCLUDE="-i /sourcemod/scripting/include -i include" all
   - mkdir plugins
   - cp compiled/*.smx plugins/
   - mkdir scripting
