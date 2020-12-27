@@ -13,7 +13,7 @@
             "SoundFile"     "quake/standard/killingspree.mp3"
             "Announce"      "all"
         }
-        "8"
+        "7"
         {
             "SoundFile"     "quake/standard/rampage.mp3"
             "Announce"      "all"
@@ -58,6 +58,29 @@
 			"SoundFile"		"quake/standard/holyshit.mp3"
 			"Announce"		"all"
 		}	
+    }
+    "KillChains"
+    {
+        "2"
+        {
+            "SoundFile"     "quake/standard/doublekill.mp3"
+            "Announce"      "all"
+        }
+        "3"
+        {
+            "SoundFile"     "quake/standard/triplekill.mp3"
+            "Announce"      "all"
+        }
+        "4"
+        {
+            "SoundFile"     "quake/standard/ultrakill.mp3"
+            "Announce"      "all"
+        }
+        "5"
+        {
+            "SoundFile"     "quake/standard/combowhore.mp3"
+            "Announce"      "all"
+        }
     }
     "SpecialChains"
     {

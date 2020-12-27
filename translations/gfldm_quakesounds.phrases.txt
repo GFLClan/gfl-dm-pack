@@ -6,6 +6,12 @@
         "en"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {normal}is on a {green}{2} {normal}kill streak."
     }
 
+    "Kill Chain"
+    {
+        "#format"       "{1:N},{2:d}"
+        "en"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {green}{2} {normal}kill chain!"
+    }
+
     "Headhunter"
     {
         "#format"       "{1:N}"
@@ -41,8 +47,6 @@
         "#format"       "{1:N}"
         "en"            "{normal}[{green}!quake{normal}] Ownage. {teamcolor[1]}{1} {normal}is on a {green}one deag {normal}spree."
     }
-
-    
 
     "Quake enabled"
     {

@@ -30,6 +30,7 @@ enum struct SpecialChain {
 }
 
 enum struct SpecialChains {
+    SpecialChain rapid_kills;
     SpecialChain headshot;
     SpecialChain awp_osok;
     SpecialChain scout_osok;
@@ -66,6 +67,7 @@ enum struct KillStreakConfig {
 
 enum struct SoundSet {
     ArrayList kill_streaks;
+    ArrayList rapid_kill_streaks;
     SoundConfig headshot;
     SoundConfig knife;
     SoundConfig hattrick;
@@ -89,6 +91,7 @@ public void OnPluginStart() {
     stats_forward.AddFunction(INVALID_HANDLE, Announce_Headhunter);
     stats_forward.AddFunction(INVALID_HANDLE, Announce_Hattrick);
     stats_forward.AddFunction(INVALID_HANDLE, Announce_Collat);
+    stats_forward.AddFunction(INVALID_HANDLE, Announce_RapidStreak);
     stats_forward.AddFunction(INVALID_HANDLE, Announce_Streak);
     stats_forward.AddFunction(INVALID_HANDLE, Announce_Headshot);
 
@@ -153,6 +156,7 @@ void LoadSoundSets() {
             char config_path[PLATFORM_MAX_PATH];
             SoundSet set;
             set.kill_streaks = new ArrayList(512);
+            set.rapid_kill_streaks = new ArrayList(512);
             char set_name[64];
 
             BuildPath(Path_SM, config_path, sizeof(config_path), "configs/gfl-quake/%s", filename);
@@ -178,6 +182,17 @@ void LoadSoundSets() {
                         }
                     } while(kv.GotoNextKey());
                     
+                    kv.GoBack();
+                } else if (StrEqual(buffer, "KillChains", false)) {
+                    kv.GotoFirstSubKey();
+
+                    do {
+                        KillStreakConfig config;
+                        if (ParseKVKillStreak(kv, config)) {
+                            set.rapid_kill_streaks.PushArray(config, sizeof(config));
+                        }
+                    } while(kv.GotoNextKey());
+
                     kv.GoBack();
                 } else if (StrEqual(buffer, "Headshot", false)) {
                     kv.GotoFirstSubKey();
@@ -306,6 +321,7 @@ public void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats, 
     UpdateSpecialChain(stats_class, player_chain_states[client].awp_osok, STATCLASS_AWP_OSOK, 6.0, victims, victim_count);
     UpdateSpecialChain(stats_class, player_chain_states[client].one_deag, STATCLASS_ONE_DEAG, 3.0, victims, victim_count);
     UpdateSpecialChain(stats_class, player_chain_states[client].headshot, STATCLASS_HEADSHOTS, 3.0, victims, victim_count, false);
+    UpdateSpecialChain(stats_class, player_chain_states[client].rapid_kills, STATCLASS_KILLS, 3.0, victims, victim_count, false);
 
     for (int c = 0; c < MaxClients; c++) {
         SoundSet target_sound_set;
@@ -446,13 +462,33 @@ Action Announce_Collat(int client, SoundSet sound_set, int stats_class, PlayerSt
     return Plugin_Continue;
 }
 
+Action Announce_RapidStreak(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
+    if (player_chain_states[attacker].rapid_kills.stat_count > 1 && stats_class & STATCLASS_KILLS) {
+        for (int c = 0; c < sound_set.rapid_kill_streaks.Length; c++) {
+            KillStreakConfig kill_streak;
+            sound_set.rapid_kill_streaks.GetArray(c, kill_streak, sizeof(kill_streak));
+            if (kill_streak.kills_req == player_chain_states[attacker].rapid_kills.stat_count) {
+                GFLDM_PrintToChat(client, "%t", "Kill Chain", attacker, player_chain_states[attacker].rapid_kills.stat_count);
+                if (ShouldAnnounce(client, attacker, victims, victim_count, kill_streak.sound_config)) {
+                    GFLDM_EmitSound(client, kill_streak.sound_config.sound_file);
+                    return Plugin_Stop;
+                }
+            }
+        }
+    }
+
+    return Plugin_Continue;
+}
+
 Action Announce_Streak(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
     if ((stats_class & STATCLASS_STREAK) && stats.current_streak > 1) {
         for (int c = 0; c < sound_set.kill_streaks.Length; c++) {
             KillStreakConfig kill_streak;
             sound_set.kill_streaks.GetArray(c, kill_streak, sizeof(kill_streak));
             if (kill_streak.kills_req == stats.current_streak) {
-                GFLDM_PrintToChat(client, "%t", "Kill Streak", attacker, stats.current_streak);
+                if (stats.current_streak > 4) {
+                    GFLDM_PrintToChat(client, "%t", "Kill Streak", attacker, stats.current_streak);
+                }
                 if (ShouldAnnounce(client, attacker, victims, victim_count, kill_streak.sound_config)) {
                     GFLDM_EmitSound(client, kill_streak.sound_config.sound_file);
                     return Plugin_Stop;
@@ -483,7 +519,7 @@ bool ShouldAnnounce(int client, int attacker, int[] victims, int victim_count, S
             || (config.announce == AnnounceVictim && IsClientVictim(client, victims, victim_count))
             || (config.announce == AnnounceAttacker && client == attacker)
         )
-        && GFLDM_IsValidClient(attacker) && quake_enabled[client]
+        && GFLDM_IsValidClient(attacker, true) && quake_enabled[client]
     ) {
         return true;
     }
