@@ -2,6 +2,6 @@
 {
     "Stats Reset"
     {
-        "en"            "{normal}[{green}Stats{normal}] Your score has been reset."
+        "en"            "{normal}[{green}!rs{normal}] Your score has been reset."
     }
 }

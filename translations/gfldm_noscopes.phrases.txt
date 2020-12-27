@@ -3,28 +3,28 @@
     "Headshot noscoped"
     {
         "#format"       "{1:N},{2:N},{3:.2f}"
-        "en"            "{normal}[{green}NoScope{normal}] {teamcolor[2]}{1} {normal}noscoped {teamcolor[3]}{2} {normal}[{green}HS{normal}] from {green}{3}m {normal}away."
+        "en"            "{normal}[{green}!noscopes{normal}] {teamcolor[1]}{1} {normal}noscoped {teamcolor[2]}{2} {normal}[{green}HS{normal}] from {green}{3}m {normal}away."
     }
 
     "Noscoped"
     {
         "#format"       "{1:N},{2:N},{3:.2f}"
-        "en"            "{normal}[{green}NoScope{normal}] {teamcolor[2]}{1} {normal}noscoped {teamcolor[3]}{2} {normal}from {green}{3}m {normal}away."
+        "en"            "{normal}[{green}!noscopes{normal}] {teamcolor[1]}{1} {normal}noscoped {teamcolor[2]}{2} {normal}from {green}{3}m {normal}away."
     }
 
     "Total noscopes"
     {
         "#format"       "{1:N},{2:d},{3:d}"
-        "en"            "{normal}[{green}NoScope{normal}] {teamcolor[2]}{1} {normal}has {green}{2} {normal}noscopes [{green}{3} HS{normal}]"
+        "en"            "{normal}[{green}!noscopes{normal}] {teamcolor[1]}{1} {normal}has {green}{2} {normal}noscopes [{green}{3} HS{normal}]"
     }
 
     "Noscopes enabled"
     {
-        "en"            "{normal}[{green}NoScope{normal}] NoScope notifications {green}enabled{normal}."
+        "en"            "{normal}[{green}!noscopes{normal}] NoScope notifications {green}enabled{normal}."
     }
     
     "Noscopes disabled"
     {
-        "en"            "{normal}[{green}NoScope{normal}] NoScope notifications {green}disabled{normal}."
+        "en"            "{normal}[{green}!noscopes{normal}] NoScope notifications {green}disabled{normal}."
     }
 }

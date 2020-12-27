@@ -6,6 +6,7 @@
 #include <gfldm-stats>
 #include <gfldm-chat>
 #include <gfldm-anim>
+#include <gfldm-clientprefs>
 
 #define THUNDER_STRIKE_ROLLING "gfldm/thunder1.mp3"
 #define THUNDER_ROLLING        "gfldm/thunder2.mp3"
@@ -41,6 +42,9 @@ int hattrick_hsreq = 3;
 float hattrick_max_delay = 3.0;
 
 PrivateForward stats_forward;
+
+bool quake_enabled[MAXPLAYERS + 1] = {true, ...};
+Cookie quake_cookie;
 
 enum AnnouncementConfig {
     AnnounceNone = 0,
@@ -88,7 +92,32 @@ public void OnPluginStart() {
     stats_forward.AddFunction(INVALID_HANDLE, Announce_Streak);
     stats_forward.AddFunction(INVALID_HANDLE, Announce_Headshot);
 
+    quake_cookie = new Cookie("GFLDM_Quake", "", CookieAccess_Protected);
+    FIRE_CLIENT_COOKIES()
+
+    RegConsoleCmd("sm_quake", Cmd_Quake, "Toggle quake sounds");
+
     sound_set_map = new StringMap();
+    LoadTranslations("gfldm_quakesounds.phrases");
+}
+
+LOAD_COOKIE_BOOL(quake_cookie, quake_enabled, "on", true)
+
+public Action Cmd_Quake(int client, int args) {
+    if (!GFLDM_IsValidClient(client)) {
+        return Plugin_Handled;
+    }
+
+    quake_enabled[client] = !quake_enabled[client];
+    if (quake_enabled[client]) {
+        quake_cookie.Set(client, "on");
+        GFLDM_PrintToChat(client, "%t", "Quake enabled");
+    } else {
+        quake_cookie.Set(client, "off");
+        GFLDM_PrintToChat(client, "%t", "Quake disabled");
+    }
+
+    return Plugin_Handled;
 }
 
 public void OnAllPluginsLoaded() {
@@ -194,7 +223,6 @@ void LoadSoundSets() {
                     kv.GoBack();
                 } else if (StrEqual(buffer, "Name", false)) {
                     kv.GetString(NULL_STRING, set_name, sizeof(set_name));
-                    PrintToServer("Got name %s", set_name);
                 }
             } while(kv.GotoNextKey(false));
 
@@ -327,6 +355,7 @@ void UpdateSpecialChain(int stats_class, SpecialChain chain, int stat_class, flo
 Action Announce_ScoutElite(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
     if (player_chain_states[attacker].scout_osok.stat_count == 6) {
         PlayAnim_ScoutElite(client, attacker);
+        GFLDM_PrintToChat(client, "%t", "Scout Elite", attacker);
         if (ShouldAnnounce(client, attacker, victims, victim_count, sound_set.scout_elite)) {
             GFLDMAnimation anim = GFLDM_StartAnimOne(client);
             anim.AddSound(sound_set.scout_elite.sound_file);
@@ -341,6 +370,7 @@ Action Announce_ScoutElite(int client, SoundSet sound_set, int stats_class, Play
 Action Announce_AWPElite(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
     if (player_chain_states[attacker].awp_osok.stat_count == 6) {
         PlayAnim_AWPElite(client, attacker);
+        GFLDM_PrintToChat(client, "%t", "Awp Elite", attacker);
         if (ShouldAnnounce(client, attacker, victims, victim_count, sound_set.awp_elite)) {
             GFLDMAnimation anim = GFLDM_StartAnimOne(client);
             anim.AddSound(sound_set.awp_elite.sound_file);
@@ -355,6 +385,7 @@ Action Announce_AWPElite(int client, SoundSet sound_set, int stats_class, Player
 Action Announce_DeagSpree(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
     if (player_chain_states[attacker].one_deag.stat_count == 3) {
         PlayAnim_DeagSpree(client, attacker);
+        GFLDM_PrintToChat(client, "%t", "Deagle Spree", attacker);
         if (ShouldAnnounce(client, attacker, victims, victim_count, sound_set.deag_spree)) {
             GFLDMAnimation anim = GFLDM_StartAnimOne(client);
             anim.AddSound(sound_set.deag_spree.sound_file, _, SNDLEVEL_GUNFIRE);
@@ -368,6 +399,7 @@ Action Announce_DeagSpree(int client, SoundSet sound_set, int stats_class, Playe
 
 Action Announce_Headhunter(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
     if (player_chain_states[attacker].headshot.stat_count == 4 && stats_class & STATCLASS_HEADSHOTS) {
+        GFLDM_PrintToChat(client, "%t", "Headhunter", attacker);
         if (ShouldAnnounce(client, attacker, victims, victim_count, sound_set.headhunter)) {
             GFLDMAnimation anim = GFLDM_StartAnimOne(client);
             if (victim_count > 0 && GFLDM_IsValidClient(victims[0], true)) {
@@ -385,6 +417,7 @@ Action Announce_Headhunter(int client, SoundSet sound_set, int stats_class, Play
 
 Action Announce_Hattrick(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
     if (player_chain_states[attacker].headshot.stat_count == 3 && stats_class & STATCLASS_HEADSHOTS) {
+        GFLDM_PrintToChat(client, "%t", "Hattrick", attacker);
         if (ShouldAnnounce(client, attacker, victims, victim_count, sound_set.hattrick)) {
             GFLDMAnimation anim = GFLDM_StartAnimOne(client);
             if (victim_count > 0 && GFLDM_IsValidClient(victims[0], true)) {
@@ -403,6 +436,7 @@ Action Announce_Hattrick(int client, SoundSet sound_set, int stats_class, Player
 Action Announce_Collat(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
     if (stats_class & STATCLASS_COLLATERAL) {
         PlayAnim_Collat(client, victims, victim_count);
+        GFLDM_PrintToChat(client, "%t", "Collateral", attacker);
         if (ShouldAnnounce(client, attacker, victims, victim_count, sound_set.collateral)) {
             GFLDM_EmitSound(client, sound_set.collateral.sound_file);
             return Plugin_Stop;
@@ -418,6 +452,7 @@ Action Announce_Streak(int client, SoundSet sound_set, int stats_class, PlayerSt
             KillStreakConfig kill_streak;
             sound_set.kill_streaks.GetArray(c, kill_streak, sizeof(kill_streak));
             if (kill_streak.kills_req == stats.current_streak) {
+                GFLDM_PrintToChat(client, "%t", "Kill Streak", attacker, stats.current_streak);
                 if (ShouldAnnounce(client, attacker, victims, victim_count, kill_streak.sound_config)) {
                     GFLDM_EmitSound(client, kill_streak.sound_config.sound_file);
                     return Plugin_Stop;
@@ -442,11 +477,13 @@ Action Announce_Headshot(int client, SoundSet sound_set, int stats_class, Player
 
 bool ShouldAnnounce(int client, int attacker, int[] victims, int victim_count, SoundConfig config) {
     if (
-        config.announce == AnnounceAll
-        || (config.announce == AnnounceParticipants && (client == attacker || IsClientVictim(client, victims, victim_count)))
-        || (config.announce == AnnounceVictim && IsClientVictim(client, victims, victim_count))
-        || (config.announce == AnnounceAttacker && client == attacker)
-
+        (
+            config.announce == AnnounceAll
+            || (config.announce == AnnounceParticipants && (client == attacker || IsClientVictim(client, victims, victim_count)))
+            || (config.announce == AnnounceVictim && IsClientVictim(client, victims, victim_count))
+            || (config.announce == AnnounceAttacker && client == attacker)
+        )
+        && GFLDM_IsValidClient(attacker) && quake_enabled[client]
     ) {
         return true;
     }

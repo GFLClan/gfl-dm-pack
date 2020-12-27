@@ -34,7 +34,7 @@ public int native_PrintToChatAll(Handle caller, int numParams) {
             int out_written;
             FormatNativeString(0, 1, 2, sizeof(buffer), out_written, buffer, "");
 
-            fmt_print(client, buffer, sizeof(buffer), numParams, 1);
+            fmt_print(client, buffer, sizeof(buffer), numParams, 2);
         }
     }
 }
@@ -56,7 +56,7 @@ public int native_PrintToChatFilter(Handle caller, int numParams) {
             int out_written;
             FormatNativeString(0, 2, 3, sizeof(buffer), out_written, buffer, "");
 
-            fmt_print(client, buffer, sizeof(buffer), numParams, 2);
+            fmt_print(client, buffer, sizeof(buffer), numParams, 3);
         }
     }
 }
@@ -70,17 +70,21 @@ public int native_PrintToChat(Handle caller, int numParams) {
         int out_written;
         FormatNativeString(0, 2, 3, sizeof(buffer), out_written, buffer, "");
 
-        fmt_print(client, buffer, sizeof(buffer), numParams, 1);
+        fmt_print(client, buffer, sizeof(buffer), numParams, 3);
     }
 }
 
 void fmt_print(int client, char[] buffer, int maxsize, int numParams, int paramOffset) {
     char replace_buffer[64];
     char color_buff[24];
-    for (int c = 1; c < numParams; c++) {
-        Format(replace_buffer, sizeof(replace_buffer), "{teamcolor[%d]}", c);
+    if (StrContains(buffer, "%t")) {
+        paramOffset += 1;
+    }
+    for (int c = paramOffset; c < numParams + 1; c++) {
+        int cell_at = GetNativeCellRef(c);
+        Format(replace_buffer, sizeof(replace_buffer), "{teamcolor[%d]}", (c - paramOffset) + 1);
         if (StrContains(buffer, replace_buffer) != -1) {
-            GetTeamColor(GetNativeCellRef(c + paramOffset), color_buff, sizeof(color_buff));
+            GetTeamColor(GetNativeCellRef(c), color_buff, sizeof(color_buff));
             ReplaceString(buffer, maxsize, replace_buffer, color_buff);
         }
     }
