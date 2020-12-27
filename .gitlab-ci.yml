@@ -4,7 +4,7 @@ image:
 
 build:
   script:
-  - cp src/include/*.inc /sourcemod/scripting/include
+  - cp include/*.inc /sourcemod/scripting/include
   - CC=/sourcemod/scripting/spcomp64 make all
   - mkdir plugins
   - cp compiled/*.smx plugins/
