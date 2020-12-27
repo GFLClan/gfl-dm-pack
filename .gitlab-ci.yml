@@ -6,7 +6,7 @@ build:
   script:
   - dnf -y install make
   - cp include/*.inc /sourcemod/scripting/include
-  - CC=/sourcemod/scripting/spcomp make all
+  - make CC=/sourcemod/scripting/spcomp all
   - mkdir plugins
   - cp compiled/*.smx plugins/
   - mkdir scripting
