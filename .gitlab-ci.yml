@@ -1,0 +1,19 @@
+image:
+  name: registry.gitlab.com/dreae/sourcemod-build:latest
+  entrypoint: ["/bin/bash", "-c"]
+
+build:
+  script:
+  - cp src/include/*.inc /sourcemod/scripting/include
+  - CC=/sourcemod/scripting/spcomp64 make all
+  - mkdir plugins
+  - cp compiled/*.smx plugins/
+  - mkdir scripting
+  - cp *.sp scripting/
+  - cp -r include/ scripting/
+  artifacts:
+    paths:
+      - plugins/
+      - translations/
+      - sound/
+      - scripting/
