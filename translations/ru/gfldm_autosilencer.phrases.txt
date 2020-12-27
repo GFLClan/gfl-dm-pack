@@ -3,16 +3,16 @@
     "Silenced"
     {
         "#format"           "{1:s}"
-        "ru"                "{normal}[{green}AutoSilencer{normal}] {green}{1}{normal} заглушен, используйте {green}!silencer, {normal}чтобы отключить."
+        "ru"                "{normal}[{green}!silencer{normal}] {green}{1}{normal} заглушен, используйте {green}!silencer, {normal}чтобы отключить."
     }
 
     "Autosilencer enabled"
     {
-        "ru"                "{normal}[{green}AutoSilencer{normal}] Ваше оружие {green}будет {normal}автоматически заглушено."
+        "ru"                "{normal}[{green}!silencer{normal}] Ваше оружие {green}будет {normal}автоматически заглушено."
     }
 
    "Autosilencer disabled"
    {
-       "ru"                 "{normal}[{green}AutoSilencer{normal}] Ваше оружие {green}не будет {normal}автоматически заглушено."
+       "ru"                 "{normal}[{green}!silencer{normal}] Ваше оружие {green}не будет {normal}автоматически заглушено."
    } 
 }
