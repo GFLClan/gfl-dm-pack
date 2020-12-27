@@ -18,3 +18,4 @@ build:
       - translations/
       - sound/
       - scripting/
+      - configs/
