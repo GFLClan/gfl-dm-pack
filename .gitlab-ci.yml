@@ -10,12 +10,15 @@ build:
   - mkdir plugins
   - cp compiled/*.smx plugins/
   - mkdir scripting
+  - mkdir -p addons/sourcemod
   - cp *.sp scripting/
   - cp -r include/ scripting/
+  - cp -r configs/ addons/sourcemod
+  - cp -r scripting/ addons/sourcemod
+  - cp -r plugins/ addons/sourcemod
+  - cp -r translations/ addons/sourcemod
+
   artifacts:
     paths:
-      - plugins/
-      - translations/
+      - addons/
       - sound/
-      - scripting/
-      - configs/
