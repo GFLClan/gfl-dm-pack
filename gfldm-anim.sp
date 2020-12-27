@@ -33,9 +33,11 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("GFLDMAnimation.AddExplosion", native_AddExplosion);
     CreateNative("GFLDMAnimation.AddLightning", native_AddLightning);
     CreateNative("GFLDMAnimation.AddAmbientSound", native_AddAmbientSound);
+    CreateNative("GFLDMAnimation.AddSound", native_AddSound);
     CreateNative("GFLDMAnimation.Play", native_Play);
     CreateNative("GFLDMAnimation.TE_Send", native_TE_Send);
     CreateNative("GFLDMAnimation.EmitAmbientSound", native_EmitAmbientSound);
+    CreateNative("GFLDMAnimation.EmitSound", native_EmitSound);
     RegPluginLibrary("gfldm-anim");
 }
 
@@ -133,6 +135,7 @@ public int native_AddAmbientSound(Handle plugin, int numParams) {
     GetNativeString(3, sound_file, sizeof(sound_file));
     float delay = GetNativeCell(4);
     int level = GetNativeCell(5);
+    float volume = GetNativeCell(6);
 
     DataPack anim_data = new DataPack();
     anim_data.WriteFloat(origin[0]);
@@ -140,9 +143,31 @@ public int native_AddAmbientSound(Handle plugin, int numParams) {
     anim_data.WriteFloat(origin[2]);
     anim_data.WriteString(sound_file);
     anim_data.WriteCell(level);
+    anim_data.WriteFloat(volume);
     anim_data.Reset();
 
     DataPack frame_data = MakeFrameData(self, INVALID_HANDLE, Anim_EmitAmbient, anim_data);
+
+    self.WriteFloat(delay);
+    self.WriteCell(frame_data);
+    return 0;
+}
+
+public int native_AddSound(Handle plugin, int numParams) {
+    char sound_file[PLATFORM_MAX_PATH];
+    DataPack self = GetNativeCell(1);
+    GetNativeString(2, sound_file, sizeof(sound_file));
+    float delay = GetNativeCell(3);
+    int level = GetNativeCell(4);
+    float volume = GetNativeCell(5);
+
+    DataPack anim_data = new DataPack();
+    anim_data.WriteString(sound_file);
+    anim_data.WriteCell(level);
+    anim_data.WriteFloat(volume);
+    anim_data.Reset();
+
+    DataPack frame_data = MakeFrameData(self, INVALID_HANDLE, Anim_EmitSound, anim_data);
 
     self.WriteFloat(delay);
     self.WriteCell(frame_data);
@@ -209,18 +234,41 @@ public int native_EmitAmbientSound(Handle plugin, int numParams) {
     char path[PLATFORM_MAX_PATH];
     GetNativeString(3, path, sizeof(path));
     int level = GetNativeCell(4);
+    float volume = GetNativeCell(5);
 
     DataPackPos pos = self.Position;
     self.Reset();
 
     AnimationTarget target = self.ReadCell();
     if (target == AnimTarget_All) {
-        EmitAmbientSound(path, origin, 0, level);
+        EmitSoundToAll(path, SOUND_FROM_WORLD, SNDCHAN_AMBIENT, level, _, volume, _, _, origin);
     } else {
         int client = self.ReadCell();
         if (GFLDM_IsValidClient(client, false)) {
-            PrintToServer("Emitting %s to %N", path, client);
-            EmitSoundToClient(client, path, SOUND_FROM_WORLD, SNDCHAN_AMBIENT, SNDLEVEL_NORMAL, _, 1.0, _, _, origin);
+            EmitSoundToClient(client, path, SOUND_FROM_WORLD, SNDCHAN_AMBIENT, level, _, volume, _, _, origin);
+        }
+    }
+
+    self.Position = pos;
+}
+
+public int native_EmitSound(Handle plugin, int numParams) {
+    DataPack self = GetNativeCell(1);
+    char path[PLATFORM_MAX_PATH];
+    GetNativeString(2, path, sizeof(path));
+    int level = GetNativeCell(3);
+    float volume = GetNativeCell(4);
+
+    DataPackPos pos = self.Position;
+    self.Reset();
+
+    AnimationTarget target = self.ReadCell();
+    if (target == AnimTarget_All) {
+        EmitSoundToAll(path, SOUND_FROM_PLAYER, SNDCHAN_AUTO, level, _, volume);
+    } else {
+        int client = self.ReadCell();
+        if (GFLDM_IsValidClient(client, false)) {
+            EmitSoundToClient(client, path, SOUND_FROM_PLAYER, SNDCHAN_AUTO, level, _, volume);
         }
     }
 
@@ -285,7 +333,7 @@ void Anim_ExplodeNormal(GFLDMAnimation anim, DataPack anim_data) {
     TE_SetupSmoke(origin, smoke_sprite, 10.0, 3);
     anim.TE_Send();
 
-    anim.EmitAmbientSound(origin, EXPLODE_SOUND, SNDLEVEL_NORMAL);
+    anim.EmitAmbientSound(origin, EXPLODE_SOUND);
 }
 
 void Anim_Lightning(GFLDMAnimation anim, DataPack anim_data) {
@@ -322,6 +370,16 @@ void Anim_EmitAmbient(GFLDMAnimation anim, DataPack anim_data) {
     char path[PLATFORM_MAX_PATH];
     anim_data.ReadString(path, sizeof(path));
     int level = anim_data.ReadCell();
+    float volume = anim_data.ReadFloat();
 
-    anim.EmitAmbientSound(origin, path, level);
+    anim.EmitAmbientSound(origin, path, level, volume);
+}
+
+void Anim_EmitSound(GFLDMAnimation anim, DataPack anim_data) {
+    char path[PLATFORM_MAX_PATH];
+    anim_data.ReadString(path, sizeof(path));
+    int level = anim_data.ReadCell();
+    float volume = anim_data.ReadFloat();
+
+    anim.EmitSound(path, level, volume);
 }

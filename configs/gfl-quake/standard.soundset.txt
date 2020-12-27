@@ -76,7 +76,7 @@
         // 3 one deags within 3 seconds of each other
         "DeagleSpree"
         {
-            "SoundFile"     "quake/standard/ownage.wav"
+            "SoundFile"     "quake/standard/ownage.mp3"
             "Announce"      "all"
         }
         // 6 shots 6 kills with the AWP within 6 seconds of each other

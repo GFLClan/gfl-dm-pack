@@ -225,7 +225,6 @@ public void EventWeaponFire(Event event, const char[] name, bool dontBroadcast) 
 
 public void GFLDM_OnNoscope(int attacker, int victim, bool headshot, float distance) {
     playerStats[attacker].noscopes++;
-    RecordVictim(attacker, victim);
     ScheduleFrameCallback(attacker, STATCLASS_NOSCOPES);
 }
 

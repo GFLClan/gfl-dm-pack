@@ -38,8 +38,8 @@ stock void GFLDM_RequireLibrary(const char[] library) {
     }
 }
 
-stock void GFLDM_EmitSound(int client, const char[] sound_file) {
+stock void GFLDM_EmitSound(int client, const char[] sound_file, float volume=1.0) {
     if (GFLDM_IsValidClient(client)) {
-        EmitSoundToClient(client, sound_file, client, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, 0.5);
+        EmitSoundToClient(client, sound_file, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, volume);
     }
 }
