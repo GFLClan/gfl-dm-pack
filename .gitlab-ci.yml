@@ -4,6 +4,7 @@ image:
 
 build:
   script:
+  - dnf -y install make
   - cp include/*.inc /sourcemod/scripting/include
   - CC=/sourcemod/scripting/spcomp64 make all
   - mkdir plugins
