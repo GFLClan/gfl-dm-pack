@@ -38,7 +38,8 @@ methodmap GFLDMAnimation < Handle {
     public native void AddLightning(float origin[3], float dest[3], float delay=0.0);
     public native void AddSound(const char[] sound_file, float delay=0.0, int level=SNDLEVEL_NORMAL, float volume=1.0);
     public native void AddAmbientSound(float origin[3], const char[] sound_file, float delay=0.0, int level=SNDLEVEL_NORMAL, float volume=1.0);
-
+    public native void AddFire(float origin[3], float lifetime, float delay=0.0, float firesize=15.0);
+    public native void AddTesla(float origin[3], float lifetime, float delay=0.0, float radius=30.0, float interval_min=0.1, float interval_max=0.5, int beamcount_min=2, int beamcount_max=9, float thick_min=2.0, float thick_max=9.0, float lifetime_min=0.2, float lifetime_max=0.5);
     public native void Play();
     public native void TE_Send();
     public native void EmitAmbientSound(float origin[3], const char[] sound_file, int level=SNDLEVEL_NORMAL, float volume=1.0);

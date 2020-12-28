@@ -34,6 +34,7 @@ public Plugin myinfo = {
 #define EXPLODE_SOUND_LOUD   "ambient/explosions/explode_9.wav"
 #define EXPLODE_SOUND        "ambient/explosions/explode_8.wav"
 #define SNDCHAN_AMBIENT      8
+#define TESLA_SPRITE         "sprites/physbeam.vmt"
 
 int explosion_sprite;
 int smoke_sprite;
@@ -51,6 +52,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("GFLDMAnimation.AddLightning", native_AddLightning);
     CreateNative("GFLDMAnimation.AddAmbientSound", native_AddAmbientSound);
     CreateNative("GFLDMAnimation.AddSound", native_AddSound);
+    CreateNative("GFLDMAnimation.AddFire", native_AddFire);
+    CreateNative("GFLDMAnimation.AddTesla", native_AddTesla);
     CreateNative("GFLDMAnimation.Play", native_Play);
     CreateNative("GFLDMAnimation.TE_Send", native_TE_Send);
     CreateNative("GFLDMAnimation.EmitAmbientSound", native_EmitAmbientSound);
@@ -64,6 +67,7 @@ public void OnMapStart() {
     explosion_sprite = PrecacheModel("sprites/plasma.vmt");
     smoke_sprite = PrecacheModel("sprites/steam1.vmt");
     lightning_sprite = PrecacheModel("sprites/lgtning.vmt");
+    PrecacheModel(TESLA_SPRITE);
 }
 
 public any native_CreateAnimation(Handle plugin, int numParams) {
@@ -191,6 +195,99 @@ public int native_AddSound(Handle plugin, int numParams) {
     return 0;
 }
 
+public int native_AddFire(Handle plugin, int numParams) {
+    DataPack self = GetNativeCell(1);
+    if (GetAnimTarget(self) != AnimTarget_All) {
+        ThrowNativeError(SP_ERROR_NATIVE, "'AddFire' may only be used on animations created with 'GFLDM_StartAnimAll'");
+    }
+
+    float origin[3];
+    GetNativeArray(2, origin, sizeof(origin));
+    float lifetime = GetNativeCell(3);
+    float delay = GetNativeCell(4);
+    float firesize = GetNativeCell(5);
+
+
+    DataPack anim_data = new DataPack();
+    anim_data.WriteFloat(origin[0]);
+    anim_data.WriteFloat(origin[1]);
+    anim_data.WriteFloat(origin[2]);
+    anim_data.WriteFloat(lifetime);
+    anim_data.WriteFloat(firesize);
+    anim_data.Reset();
+
+    DataPack frame_data = MakeFrameData(self, INVALID_HANDLE, Anim_Fire, anim_data);
+
+    self.WriteFloat(delay);
+    self.WriteCell(frame_data);
+    return 0;
+}
+
+public int native_AddTesla(Handle plugin, int numParams) {
+    DataPack self = GetNativeCell(1);
+    if (GetAnimTarget(self) != AnimTarget_All) {
+        ThrowNativeError(SP_ERROR_NATIVE, "'AddTesla' may only be used on animations created with 'GFLDM_StartAnimAll'");
+    }
+
+    float origin[3];
+    GetNativeArray(2, origin, sizeof(origin));
+    float lifetime = GetNativeCell(3);
+    float delay = GetNativeCell(4);
+
+    float radius = GetNativeCell(5);
+    float interval_min = GetNativeCell(6);
+    float interval_max = GetNativeCell(7);
+    int beamcount_min = GetNativeCell(8);
+    int beamcount_max = GetNativeCell(9);
+    float thick_min = GetNativeCell(10);
+    float thick_max = GetNativeCell(11);
+    float lifetime_min = GetNativeCell(12);
+    float lifetime_max = GetNativeCell(13);
+
+    DataPack anim_data = new DataPack();
+    anim_data.WriteFloat(origin[0]);
+    anim_data.WriteFloat(origin[1]);
+    anim_data.WriteFloat(origin[2]);
+    anim_data.WriteFloat(lifetime);
+    anim_data.WriteFloat(radius);
+    anim_data.WriteFloat(interval_min);
+    anim_data.WriteFloat(interval_max);
+    anim_data.WriteCell(beamcount_min);
+    anim_data.WriteCell(beamcount_max);
+    anim_data.WriteFloat(thick_min);
+    anim_data.WriteFloat(thick_max);
+    anim_data.WriteFloat(lifetime_min);
+    anim_data.WriteFloat(lifetime_max);
+    anim_data.Reset();
+
+    DataPack frame_data = MakeFrameData(self, INVALID_HANDLE, Anim_Tesla, anim_data);
+
+    self.WriteFloat(delay);
+    self.WriteCell(frame_data);
+    return 0;
+}
+
+AnimationTarget GetAnimTarget(DataPack anim) {
+    DataPackPos pos = anim.Position;
+    anim.Reset();
+
+    AnimationTarget target = anim.ReadCell();
+    anim.Position = pos;
+
+    return target;
+}
+
+int GetAnimClient(DataPack anim) {
+    DataPackPos pos = anim.Position;
+    anim.Reset();
+
+    anim.ReadCell();
+    int client = anim.ReadCell();
+    anim.Position = pos;
+
+    return client;
+}
+
 DataPack MakeFrameData(DataPack anim, Handle plugin, Function callback, DataPack anim_data) {
     DataPack frame_data = new DataPack();
     frame_data.WriteCell(plugin);
@@ -228,20 +325,16 @@ public int native_Play(Handle plugin, int numParams) {
 
 public int native_TE_Send(Handle plugin, int numParams) {
     DataPack self = GetNativeCell(1);
-    DataPackPos pos = self.Position;
-    self.Reset();
 
-    AnimationTarget target = self.ReadCell();
+    AnimationTarget target = GetAnimTarget(self);
     if (target == AnimTarget_All) {
         TE_SendToAll();
     } else {
-        int client = self.ReadCell();
+        int client = GetAnimClient(self);
         if (GFLDM_IsValidClient(client, false)) {
             TE_SendToClient(client);
         }
     }
-
-    self.Position = pos;
 }
 
 public int native_EmitAmbientSound(Handle plugin, int numParams) {
@@ -253,20 +346,15 @@ public int native_EmitAmbientSound(Handle plugin, int numParams) {
     int level = GetNativeCell(4);
     float volume = GetNativeCell(5);
 
-    DataPackPos pos = self.Position;
-    self.Reset();
-
-    AnimationTarget target = self.ReadCell();
+    AnimationTarget target = GetAnimTarget(self);
     if (target == AnimTarget_All) {
         EmitSoundToAll(path, SOUND_FROM_WORLD, SNDCHAN_AMBIENT, level, _, volume, _, _, origin);
     } else {
-        int client = self.ReadCell();
+        int client = GetAnimClient(self);
         if (GFLDM_IsValidClient(client, false)) {
             EmitSoundToClient(client, path, SOUND_FROM_WORLD, SNDCHAN_AMBIENT, level, _, volume, _, _, origin);
         }
     }
-
-    self.Position = pos;
 }
 
 public int native_EmitSound(Handle plugin, int numParams) {
@@ -276,20 +364,15 @@ public int native_EmitSound(Handle plugin, int numParams) {
     int level = GetNativeCell(3);
     float volume = GetNativeCell(4);
 
-    DataPackPos pos = self.Position;
-    self.Reset();
-
-    AnimationTarget target = self.ReadCell();
+    AnimationTarget target = GetAnimTarget(self);
     if (target == AnimTarget_All) {
         EmitSoundToAll(path, SOUND_FROM_PLAYER, SNDCHAN_AUTO, level, _, volume);
     } else {
-        int client = self.ReadCell();
+        int client = GetAnimClient(self);
         if (GFLDM_IsValidClient(client, false)) {
             EmitSoundToClient(client, path, SOUND_FROM_PLAYER, SNDCHAN_AUTO, level, _, volume);
         }
     }
-
-    self.Position = pos;
 }
 
 Action Timer_PlayFrame(Handle timer, any data) {
@@ -368,14 +451,14 @@ void Anim_Lightning(GFLDMAnimation anim, DataPack anim_data) {
     NormalizeVector(normal, normal);
 
     TE_Start("GaussExplosion");
-	TE_WriteVector("m_vecOrigin[0]", dest);
-	TE_WriteNum("m_nType", 1);
-	TE_WriteVector("m_vecDirection", normal);
+    TE_WriteVector("m_vecOrigin[0]", dest);
+    TE_WriteNum("m_nType", 1);
+    TE_WriteVector("m_vecDirection", normal);
     anim.TE_Send();
 
     int color[4] = {255, 255, 255, 255};
     TE_SetupBeamPoints(origin, dest, lightning_sprite, 0, 0, 0, 0.2, 20.0, 10.0, 0, 1.0, color, 3);
-	anim.TE_Send();
+    anim.TE_Send();
 }
 
 void Anim_EmitAmbient(GFLDMAnimation anim, DataPack anim_data) {
@@ -399,4 +482,109 @@ void Anim_EmitSound(GFLDMAnimation anim, DataPack anim_data) {
     float volume = anim_data.ReadFloat();
 
     anim.EmitSound(path, level, volume);
+}
+
+void Anim_Fire(GFLDMAnimation anim, DataPack anim_data) {
+    float origin[3];
+    origin[0] = anim_data.ReadFloat();
+    origin[1] = anim_data.ReadFloat();
+    origin[2] = anim_data.ReadFloat();
+    float lifetime = anim_data.ReadFloat();
+    float firesize = anim_data.ReadFloat();
+    int fire = CreateEntityByName("env_fire");
+    if(IsValidEdict(fire)) {
+        char s_firesize[12];
+        FloatToString(firesize, s_firesize, sizeof(s_firesize));
+        DispatchKeyValue(fire, "damagescale", "0.0");
+        
+        DispatchKeyValue(fire, "Name", NULL_STRING);
+        DispatchKeyValue(fire, "health", "1000");
+        DispatchKeyValue(fire, "fireattack", "0");
+        DispatchKeyValue(fire, "firetype", "0");
+        DispatchKeyValue(fire, "flags", "136");
+        DispatchSpawn(fire);
+        DispatchKeyValue(fire, "firesize", s_firesize);
+        TeleportEntity(fire, origin, NULL_VECTOR, NULL_VECTOR);
+        ActivateEntity(fire);
+        AcceptEntityInput(fire, "StartFire");
+        CreateTimer(lifetime, Timer_KillEnt, fire, TIMER_FLAG_NO_MAPCHANGE);
+    } else {
+        LogError("Failed to create entity env_fire!");
+    }
+}
+
+void Anim_Tesla(GFLDMAnimation anim, DataPack anim_data) {
+    float origin[3];
+    origin[0] = anim_data.ReadFloat();
+    origin[1] = anim_data.ReadFloat();
+    origin[2] = anim_data.ReadFloat();
+    float lifetime = anim_data.ReadFloat();
+    float radius = anim_data.ReadFloat();
+    float interval_min = anim_data.ReadFloat();
+    float interval_max = anim_data.ReadFloat();
+    int beamcount_min = anim_data.ReadCell();
+    int beamcount_max = anim_data.ReadCell();
+    float thick_min = anim_data.ReadFloat();
+    float thick_max = anim_data.ReadFloat();
+    float lifetime_min = anim_data.ReadFloat();
+    float lifetime_max = anim_data.ReadFloat();
+    int tesla = CreateEntityByName("point_tesla");
+    if (IsValidEdict(tesla)) {
+        char s_beam_min[12], s_beam_max[12];
+        IntToString(beamcount_min, s_beam_min, sizeof(s_beam_min));
+        IntToString(beamcount_max, s_beam_max, sizeof(s_beam_max));
+        DispatchKeyValueFloat(tesla, "m_flRadius", radius);
+        DispatchKeyValue(tesla, "m_SoundName", "DoSpark");
+        DispatchKeyValue(tesla, "beamcount_min", s_beam_min);
+        DispatchKeyValue(tesla, "beamcount_max", s_beam_max);
+        DispatchKeyValue(tesla, "texture", TESLA_SPRITE);
+        DispatchKeyValue(tesla, "m_Color", "255 255 255");
+        DispatchKeyValueFloat(tesla, "thick_min", thick_min);
+        DispatchKeyValueFloat(tesla, "thick_max", thick_max);
+        DispatchKeyValueFloat(tesla, "lifetime_min", lifetime_min);
+        DispatchKeyValueFloat(tesla, "lifetime_max", lifetime_max);
+        DispatchKeyValueFloat(tesla, "interval_min", interval_min);
+        DispatchKeyValueFloat(tesla, "interval_max", interval_max);
+        DispatchSpawn(tesla);
+        TeleportEntity(tesla, origin, NULL_VECTOR, NULL_VECTOR);
+        AcceptEntityInput(tesla, "TurnOn");
+        AcceptEntityInput(tesla, "DoSpark");
+
+        DataPack spark_data = new DataPack();
+        spark_data.WriteFloat(interval_min);
+        spark_data.WriteFloat(interval_max);
+        spark_data.WriteCell(tesla);
+        CreateTimer(GetRandomFloat(interval_min, interval_max), Timer_Spark, spark_data);
+        CreateTimer(lifetime, Timer_KillEnt, tesla, TIMER_FLAG_NO_MAPCHANGE);
+    } else {
+        LogError("Failed to create point_tesla");
+    }
+}
+
+Action Timer_Spark(Handle timer, any data) {
+    DataPack spark_data = data;
+    spark_data.Reset();
+    float lifetime_min = spark_data.ReadFloat();
+    float lifetime_max = spark_data.ReadFloat();
+    int tesla = spark_data.ReadCell();
+    if (IsValidEdict(tesla)) {
+        if (AcceptEntityInput(tesla, "DoSpark")){
+            CreateTimer(GetRandomFloat(lifetime_min, lifetime_max), Timer_Spark, spark_data);
+        } else {
+            delete spark_data;
+        }
+    } else {
+        delete spark_data;
+    }
+
+    return Plugin_Stop;
+}
+
+Action Timer_KillEnt(Handle timer, any data) {
+    int ent = data;
+    if(IsValidEdict(ent)) {
+        AcceptEntityInput(ent, "Kill");
+        RemoveEdict(ent);
+    }
+    return Plugin_Stop;
 }

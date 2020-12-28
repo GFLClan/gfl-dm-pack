@@ -23,41 +23,41 @@
             "SoundFile"     "quake/standard/monsterkill.mp3"
             "Announce"      "all"
         }
-		"14"
-		{
-            "SoundFile"		"quake/standard/unstoppable.mp3"
-			"Announce"		"all"
-		}
-		"16"
-		{
-			"SoundFile"		"quake/standard/ultrakill.mp3"
-			"Announce"		"all"
-		}
-		"18"
-		{
-			"SoundFile"		"quake/standard/godlike.mp3"
-			"Announce"		"all"
-		}
-		"20"
-		{
-			"SoundFile"		"quake/standard/wickedsick.mp3"
-			"Announce"		"all"
-		}
-		"22"
-		{
-			"SoundFile"		"quake/standard/impressive.mp3"
-			"Announce"		"all"
-		}
-		"24"
-		{
-			"SoundFile"		"quake/standard/ludicrouskill.mp3"
-			"Announce"		"all"
-		}
-		"26"
-		{
-			"SoundFile"		"quake/standard/holyshit.mp3"
-			"Announce"		"all"
-		}	
+        "14"
+        {
+            "SoundFile"        "quake/standard/unstoppable.mp3"
+            "Announce"        "all"
+        }
+        "16"
+        {
+            "SoundFile"        "quake/standard/ultrakill.mp3"
+            "Announce"        "all"
+        }
+        "18"
+        {
+            "SoundFile"        "quake/standard/godlike.mp3"
+            "Announce"        "all"
+        }
+        "20"
+        {
+            "SoundFile"        "quake/standard/wickedsick.mp3"
+            "Announce"        "all"
+        }
+        "22"
+        {
+            "SoundFile"        "quake/standard/impressive.mp3"
+            "Announce"        "all"
+        }
+        "24"
+        {
+            "SoundFile"        "quake/standard/ludicrouskill.mp3"
+            "Announce"        "all"
+        }
+        "26"
+        {
+            "SoundFile"        "quake/standard/holyshit.mp3"
+            "Announce"        "all"
+        }    
     }
     "KillChains"
     {
@@ -105,14 +105,14 @@
         // 6 shots 6 kills with the AWP within 6 seconds of each other
         "AwpElite"
         {
-            "SoundFile"		"quake/standard/unstoppable.mp3"
-			"Announce"		"all"
+            "SoundFile"        "quake/standard/unstoppable.mp3"
+            "Announce"        "all"
         }
         // 6 shots 6 kills with the scout within 6 seconds of each other
         "ScoutElite"
         {
-            "SoundFile"		"quake/standard/holyshit.mp3"
-			"Announce"		"all"
+            "SoundFile"        "quake/standard/holyshit.mp3"
+            "Announce"        "all"
         }
         "Collateral"
         {
@@ -122,12 +122,12 @@
     }
     "Headshot"
     {
-        "SoundFile"		"quake/standard/headshot.mp3"
-        "Announce"		"participants"
+        "SoundFile"        "quake/standard/headshot.mp3"
+        "Announce"        "participants"
     }
     "Knife"
     {
-        "SoundFile"		"quake/standard/humiliation.mp3"
-        "Announce"		"all"
+        "SoundFile"        "quake/standard/humiliation.mp3"
+        "Announce"        "all"
     }
 }
