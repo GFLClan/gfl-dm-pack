@@ -19,7 +19,7 @@
     #endinput
 #endif
 #define _gfldm_included
-#define GFLDM_VERSION "2.0.0"
+#define GFLDM_VERSION "2.1.0"
 
 #include <cstrike>
 
