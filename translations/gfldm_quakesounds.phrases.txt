@@ -24,16 +24,28 @@
         "en"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {green}Hattrick"
     }
 
-    "Scout Elite"
+    "Announce Scout Elite"
     {
         "#format"       "{1:N}"
         "en"            "{normal}[{green}!quake{normal}] Holy shit! {teamcolor[1]}{1} {normal}is a {green}Scout Elite"
     }
     
-    "Awp Elite"
+    "Announce Awp Elite"
     {
         "#format"       "{1:N}"
-        "en"            "{normal}[{green}!quake{normal}] Unstoppable! {teamcolor[1]}{1} {normal}is an {green}AWP Elite"
+        "en"            "{normal}[{green}!quake{normal}] Wicked sick! {teamcolor[1]}{1} {normal}is an {green}AWP Elite"
+    }
+
+    "Announce Scout Ace"
+    {
+        "#format"       "{1:N}"
+        "en"            "{normal}[{green}!quake{normal}] Prefect. {teamcolor[1]}{1} {normal}is a {green}Scout Ace"
+    }
+    
+    "Announce Awp Ace"
+    {
+        "#format"       "{1:N}"
+        "en"            "{normal}[{green}!quake{normal}] Unstoppable! {teamcolor[1]}{1} {normal}is an {green}AWP Ace"
     }
     
     "Collateral"
@@ -42,7 +54,7 @@
         "en"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {normal}got a {green}collateral"
     }
 
-    "Deagle Spree"
+    "Announce Deagle Spree"
     {
         "#format"       "{1:N}"
         "en"            "{normal}[{green}!quake{normal}] Ownage. {teamcolor[1]}{1} {normal}is on a {green}one deag {normal}spree."
@@ -56,5 +68,35 @@
     "Quake disabled"
     {
         "en"            "{normal}[{green}!quake{normal}] Quake sounds {green}disabled{normal}."
+    }
+
+    "Scout Elite"
+    {
+        "en"            "Scout Elite"
+    }
+
+    "AWP Elite"
+    {
+        "en"            "AWP Elite"
+    }
+
+    "Scout Ace"
+    {
+        "en"            "Scout Ace"
+    }
+
+    "AWP Ace"
+    {
+        "en"            "AWP Ace"
+    }
+
+    "Deagle Spree"
+    {
+        "en"            "Deagle Spree"
+    }
+
+    "One Deag"
+    {
+        "en"            "One Deag"
     }
 }

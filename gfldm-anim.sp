@@ -58,6 +58,13 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("GFLDMAnimation.TE_Send", native_TE_Send);
     CreateNative("GFLDMAnimation.EmitAmbientSound", native_EmitAmbientSound);
     CreateNative("GFLDMAnimation.EmitSound", native_EmitSound);
+
+    CreateNative("GFLDMHudElement.GFLDMHudElement", native_HudElement);
+    CreateNative("GFLDMHudElement.SetColor", native_SetColor);
+    CreateNative("GFLDMHudElement.Draw", native_Draw);
+    CreateNative("GFLDMHudElement.Clear", native_Clear);
+    CreateNative("GFLDMHudElement.Close", native_CloseHud);
+
     RegPluginLibrary("gfldm-anim");
 }
 
@@ -68,6 +75,74 @@ public void OnMapStart() {
     smoke_sprite = PrecacheModel("sprites/steam1.vmt");
     lightning_sprite = PrecacheModel("sprites/lgtning.vmt");
     PrecacheModel(TESLA_SPRITE);
+}
+
+public any native_HudElement(Handle plugin, int num_params) {
+    int client = GetNativeCell(1);
+    float x = GetNativeCell(2);
+    float y = GetNativeCell(3);
+    int default_color[4] = {255, 255, 255, 255};
+    StringMap hud = new StringMap();
+    hud.SetValue("client", client);
+    hud.SetValue("synchronizer", CreateHudSynchronizer());
+    hud.SetValue("x", x);
+    hud.SetValue("y", y);
+    hud.SetArray("color", default_color, sizeof(default_color));
+
+    return hud;
+}
+
+public any native_SetColor(Handle plugin, int num_params) {
+    StringMap hud = GFLDM_GetNativeHandle(1);
+    int color[4];
+    GetNativeArray(2, color, sizeof(color));
+    hud.SetArray("color", color, sizeof(color));
+}
+
+public any native_Draw(Handle plugin, int num_params) {
+    StringMap hud = GFLDM_GetNativeHandle(1);
+    float hold_time = GetNativeCell(2);
+    int client;
+    if (hud.GetValue("client", client) && GFLDM_IsValidClient(client)) {
+        Handle synchronizer;
+        hud.GetValue("synchronizer", synchronizer);
+        float x, y;
+        hud.GetValue("x", x);
+        hud.GetValue("y", y);
+
+        int color[4];
+        hud.GetArray("color", color, sizeof(color));
+        
+        char buffer[1024];
+        int written;
+        
+        SetGlobalTransTarget(client);
+        FormatNativeString(0, 3, 4, sizeof(buffer), written, buffer);
+        SetGlobalTransTarget(LANG_SERVER);
+
+        SetHudTextParams(x, y, hold_time, color[0], color[1], color[2], color[3]);
+        ShowSyncHudText(client, synchronizer, buffer);
+    }
+}
+
+public any native_Clear(Handle plugin, int num_params) {
+    StringMap hud = GFLDM_GetNativeHandle(1);
+    int client;
+    if (hud.GetValue("client", client) && GFLDM_IsValidClient(client)) {
+        Handle synchronizer;
+        hud.GetValue("synchronizer", synchronizer);
+        ClearSyncHud(client, synchronizer);
+    }
+}
+
+public any native_CloseHud(Handle plugin, int num_params) {
+    StringMap hud = GFLDM_GetNativeHandle(1);
+    Handle synchronizer;
+    if (hud.GetValue("synchronizer", synchronizer) && synchronizer != INVALID_HANDLE) {
+        delete synchronizer;
+    }
+
+    delete hud;
 }
 
 public any native_CreateAnimation(Handle plugin, int numParams) {
@@ -88,9 +163,9 @@ public any native_CreateSingleAnimation(Handle plugin, int numParams) {
 }
 
 public int native_AddAnimCallback(Handle plugin, int numParams) {
-    DataPack self = GetNativeCell(1);
+    DataPack self = GFLDM_GetNativeHandle(1);
     AnimationFunction callback = GetNativeCell(2);
-    DataPack anim_data = GetNativeCell(3);
+    DataPack anim_data = GFLDM_GetNativeHandle(3);
     float delay = GetNativeCell(4);
 
     DataPack frame_data = MakeFrameData(self, plugin, callback, anim_data);
@@ -102,7 +177,7 @@ public int native_AddAnimCallback(Handle plugin, int numParams) {
 
 public int native_AddExplosion(Handle plugin, int numParams) {
     float pos[3];
-    DataPack self = GetNativeCell(1);
+    DataPack self = GFLDM_GetNativeHandle(1);
     GetNativeArray(2, pos, sizeof(pos));
     float delay = GetNativeCell(3);
     ExplosionType type = GetNativeCell(4);
@@ -127,7 +202,7 @@ public int native_AddExplosion(Handle plugin, int numParams) {
 
 public int native_AddLightning(Handle plugin, int numParams) {
     float origin[3], dest[3];
-    DataPack self = GetNativeCell(1);
+    DataPack self = GFLDM_GetNativeHandle(1);
     GetNativeArray(2, origin, sizeof(origin));
     GetNativeArray(3, dest, sizeof(dest));
     float delay = GetNativeCell(4);
@@ -151,7 +226,7 @@ public int native_AddLightning(Handle plugin, int numParams) {
 public int native_AddAmbientSound(Handle plugin, int numParams) {
     float origin[3];
     char sound_file[PLATFORM_MAX_PATH];
-    DataPack self = GetNativeCell(1);
+    DataPack self = GFLDM_GetNativeHandle(1);
     GetNativeArray(2, origin, sizeof(origin));
     GetNativeString(3, sound_file, sizeof(sound_file));
     float delay = GetNativeCell(4);
@@ -176,7 +251,7 @@ public int native_AddAmbientSound(Handle plugin, int numParams) {
 
 public int native_AddSound(Handle plugin, int numParams) {
     char sound_file[PLATFORM_MAX_PATH];
-    DataPack self = GetNativeCell(1);
+    DataPack self = GFLDM_GetNativeHandle(1);
     GetNativeString(2, sound_file, sizeof(sound_file));
     float delay = GetNativeCell(3);
     int level = GetNativeCell(4);
@@ -196,7 +271,7 @@ public int native_AddSound(Handle plugin, int numParams) {
 }
 
 public int native_AddFire(Handle plugin, int numParams) {
-    DataPack self = GetNativeCell(1);
+    DataPack self = GFLDM_GetNativeHandle(1);
     if (GetAnimTarget(self) != AnimTarget_All) {
         ThrowNativeError(SP_ERROR_NATIVE, "'AddFire' may only be used on animations created with 'GFLDM_StartAnimAll'");
     }
@@ -224,7 +299,7 @@ public int native_AddFire(Handle plugin, int numParams) {
 }
 
 public int native_AddTesla(Handle plugin, int numParams) {
-    DataPack self = GetNativeCell(1);
+    DataPack self = GFLDM_GetNativeHandle(1);
     if (GetAnimTarget(self) != AnimTarget_All) {
         ThrowNativeError(SP_ERROR_NATIVE, "'AddTesla' may only be used on animations created with 'GFLDM_StartAnimAll'");
     }
@@ -300,7 +375,7 @@ DataPack MakeFrameData(DataPack anim, Handle plugin, Function callback, DataPack
 }
 
 public int native_Play(Handle plugin, int numParams) {
-    DataPack self = GetNativeCell(1);
+    DataPack self = GFLDM_GetNativeHandle(1);
     self.Reset();
     self.ReadCell();
     self.ReadCell();
@@ -324,7 +399,7 @@ public int native_Play(Handle plugin, int numParams) {
 }
 
 public int native_TE_Send(Handle plugin, int numParams) {
-    DataPack self = GetNativeCell(1);
+    DataPack self = GFLDM_GetNativeHandle(1);
 
     AnimationTarget target = GetAnimTarget(self);
     if (target == AnimTarget_All) {
@@ -338,7 +413,7 @@ public int native_TE_Send(Handle plugin, int numParams) {
 }
 
 public int native_EmitAmbientSound(Handle plugin, int numParams) {
-    DataPack self = GetNativeCell(1);
+    DataPack self = GFLDM_GetNativeHandle(1);
     float origin[3];
     GetNativeArray(2, origin, sizeof(origin));
     char path[PLATFORM_MAX_PATH];
@@ -358,7 +433,7 @@ public int native_EmitAmbientSound(Handle plugin, int numParams) {
 }
 
 public int native_EmitSound(Handle plugin, int numParams) {
-    DataPack self = GetNativeCell(1);
+    DataPack self = GFLDM_GetNativeHandle(1);
     char path[PLATFORM_MAX_PATH];
     GetNativeString(2, path, sizeof(path));
     int level = GetNativeCell(3);

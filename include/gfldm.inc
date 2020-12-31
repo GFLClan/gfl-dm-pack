@@ -60,3 +60,12 @@ stock void GFLDM_EmitSound(int client, const char[] sound_file, float volume=1.0
         EmitSoundToClient(client, sound_file, SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, volume);
     }
 }
+
+stock any GFLDM_GetNativeHandle(int param) {
+    Handle hndl = GetNativeCell(param);
+    if (hndl == INVALID_HANDLE) {
+        ThrowNativeError(SP_ERROR_NATIVE, "Invalid handle: %d", hndl);
+    }
+
+    return hndl;
+}

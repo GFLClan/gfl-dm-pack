@@ -109,13 +109,17 @@ public void EventPlayerDeath(Event event, const char[] name, bool dontBroadcast)
     int victim = GetClientOfUserId(event.GetInt("userid"));
     int attacker = GetClientOfUserId(event.GetInt("attacker"));
 
-    if (!GFLDM_IsValidClient(victim, true) || !GFLDM_IsValidClient(attacker, true) || victim == attacker) {
+    if (!GFLDM_IsValidClient(victim, true) || !GFLDM_IsValidClient(attacker, true)) {
         return;
     }
-
     playerStats[victim].deaths++;
     playerStats[victim].current_streak = 0;
     ScheduleFrameCallback(victim, STATCLASS_DEATHS | STATCLASS_KDR);
+
+    // Suicide, don't update attacker stats
+    if (victim == attacker) {
+        return;
+    }
 
     int stat_class = STATCLASS_KILLS | STATCLASS_KDR | STATCLASS_STREAK;
     playerStats[attacker].kills++;
@@ -287,6 +291,7 @@ void ResolveFrameShot(int client) {
     if (playerStats[client].shots == 1) {
         if (StrEqual(shotThisFrame[client].weapon, "deagle") && shotThisFrame[client].headshot && shotThisFrame[client].kill) {
             pendingFrameClass[client] = pendingFrameClass[client] | STATCLASS_ONE_DEAG;
+            playerStats[client].one_deags++;
         } else if (StrEqual(shotThisFrame[client].weapon, "awp") && shotThisFrame[client].kill) {
             pendingFrameClass[client] = pendingFrameClass[client] | STATCLASS_AWP_OSOK;
         } else if (StrEqual(shotThisFrame[client].weapon, "scout") && shotThisFrame[client].kill) {

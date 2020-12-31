@@ -64,7 +64,7 @@
         "2"
         {
             "SoundFile"     "quake/standard/doublekill.mp3"
-            "Announce"      "all"
+            "Announce"      "participants"
         }
         "3"
         {
@@ -105,13 +105,25 @@
         // 6 shots 6 kills with the AWP within 6 seconds of each other
         "AwpElite"
         {
-            "SoundFile"        "quake/standard/unstoppable.mp3"
+            "SoundFile"        "quake/standard/wickedsick.mp3"
             "Announce"        "all"
         }
         // 6 shots 6 kills with the scout within 6 seconds of each other
         "ScoutElite"
         {
             "SoundFile"        "quake/standard/holyshit.mp3"
+            "Announce"        "all"
+        }
+        // 6 shots 6 kills with the AWP without missing
+        "AwpAce"
+        {
+            "SoundFile"        "quake/standard/unstoppable.mp3"
+            "Announce"        "all"
+        }
+        // 6 shots 6 kills with the scout without missing
+        "ScoutAce"
+        {
+            "SoundFile"        "quake/standard/perfect.mp3"
             "Announce"        "all"
         }
         "Collateral"

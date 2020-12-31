@@ -51,7 +51,6 @@ public void OnPluginStart() {
     GFLDM_DefineVersion("gfldm_version");
 
     HookEvent("round_start", Event_RoundStart);
-    RegConsoleCmd("sm_usermessage", ConCmd_Message);
 
     for (int c = 1; c <= MaxClients; c++) {
         if (IsClientInGame(c)) {
@@ -114,17 +113,6 @@ public Action Timer_ReloadMap(Handle timer, any data) {
     }
 
     return Plugin_Continue;
-}
-
-public Action ConCmd_Message(int client, int args) {
-    char msg_type[64];
-    GetCmdArg(1, msg_type, sizeof(msg_type));
-    Handle hMessage = StartMessageOne(msg_type, client);
-    BfWriteByte(hMessage, 1);
-    BfWriteString(hMessage, "Hello world");
-    EndMessage();
-
-    return Plugin_Handled;
 }
 
 public void OnMapStart() {

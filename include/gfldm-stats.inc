@@ -71,6 +71,7 @@ enum struct PlayerStats {
     int kills;
     int headshots;
     int noscopes;
+    int one_deags;
     int knifes;
     int deaths;
     int current_streak;

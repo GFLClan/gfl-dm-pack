@@ -20,6 +20,7 @@
 #include <sourcemod>
 #include <gfldm>
 #include <gfldm-chat>
+#include <gfldm-anim>
 #include <gfldm-stats>
 #include <gfldm-clientprefs>
 
@@ -36,8 +37,10 @@ enum struct StatsEntry {
     PlayerStats stats;
 }
 
-#define CHANNEL_TITLE 1
-#define CHANNEL_BODY 2
+enum struct HudElements {
+    GFLDMHudElement title;
+    GFLDMHudElement body;
+}
 
 typedef LineFunction = function bool (int client, char[] linebuff, int maxsize);
 typedef SortFunction = function int(StatsEntry a, StatsEntry b);
@@ -61,6 +64,7 @@ ActiveDisplay displayed = Display_Accuracy;
 bool noscopesEnabled = false;
 Cookie enabled_cookie;
 bool livetop_enabled[MAXPLAYERS + 1] = {false, ...};
+HudElements hud_elements[MAXPLAYERS + 1];
 ConVar cvar_cycle_time;
 Handle timer_cycle;
 
@@ -78,6 +82,12 @@ public OnPluginStart() {
     cvar_cycle_time.AddChangeHook(CvarChanged);
 
     AutoExecConfig();
+    
+    for (int c = 1; c <= MaxClients; c++) {
+        if (GFLDM_IsValidClient(c)) {
+            OnClientConnected(c);
+        }
+    }
 }
 
 public void OnConfigsExecuted() {
@@ -96,12 +106,31 @@ public void CvarChanged(ConVar cvar, const char[] oldVlue, const char[] newValue
 
 public void OnAllPluginsLoaded() {
     GFLDM_RequireLibrary("gfldm-stats");
+    GFLDM_RequireLibrary("gfldm-anim");
     noscopesEnabled = LibraryExists("gfldm-noscopes");
 }
 
 LOAD_COOKIE_BOOL(enabled_cookie, livetop_enabled, "on", true)
 
+public void OnClientConnected(int client) {
+    GFLDMHudElement title = new GFLDMHudElement(client, 0.14, 0.03);
+    GFLDMHudElement body = new GFLDMHudElement(client, 0.14, 0.06);
+    
+    int color[4] = {0, 118, 178, 255};
+    title.SetColor(color);
+    color = {164, 178, 149, 255};
+    body.SetColor(color);
+
+    hud_elements[client].title = title;
+    hud_elements[client].body = body;
+}
+
 public void OnClientDisconnect(int client) {
+    hud_elements[client].title.Close();
+    hud_elements[client].body.Close();
+    delete hud_elements[client].title;
+    delete hud_elements[client].body;
+    
     for (int c = 0; c < sizeof(mostAccurate); c++) {
         StatsEntry zero;
         if (mostAccurate[c].client == client) {
@@ -135,8 +164,8 @@ public Action Cmd_LiveStats(int client, int args) {
     } else {
         enabled_cookie.Set(client, "off");
         GFLDM_PrintToChat(client, "%t", "Livestats disabled");
-        ShowHudText(client, CHANNEL_TITLE, "");
-        ShowHudText(client, CHANNEL_BODY, "");
+        hud_elements[client].title.Clear();
+        hud_elements[client].body.Clear();
     }
 
     return Plugin_Handled;
@@ -160,14 +189,11 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 }
 
 void Draw(int client, const char[] title, LineFunction line_fn) {
-    SetHudTextParams(0.14, 0.03, 600.0, 0, 118, 178, 255);
-    ShowHudText(client, CHANNEL_TITLE, "%t", title);
+    hud_elements[client].title.Draw(600.0, "%t", title);
     
     char buffer[512];
     RenderBody(buffer, sizeof(buffer), line_fn);
-
-    SetHudTextParams(0.14, 0.06, 600.0, 164, 178, 149, 255);
-    ShowHudText(client, CHANNEL_BODY, buffer);
+    hud_elements[client].body.Draw(600.0, buffer);
 }
 
 void RedrawClient(int client) {
@@ -254,6 +280,15 @@ bool RenderLine_KDR(int j, char[] line, int maxsize) {
 bool RenderLine_Streak(int j, char[] line, int maxsize) {
     if (GFLDM_IsValidClient(highestStreak[j].client, true)) {
         Format(line, maxsize, " %N: %d", highestStreak[j].client, highestStreak[j].stats.highest_streak);
+        return true;
+    }
+
+    return false;
+}
+
+bool RenderLine_OneDeag(int j, char[] line, int maxsize) {
+    if (GFLDM_IsValidClient(highestStreak[j].client, true)) {
+        Format(line, maxsize, " %N: %d", highestStreak[j].client, highestStreak[j].stats.one_deags);
         return true;
     }
 

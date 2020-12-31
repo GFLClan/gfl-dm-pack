@@ -53,14 +53,18 @@ enum struct SpecialChain {
 enum struct SpecialChains {
     SpecialChain rapid_kills;
     SpecialChain headshot;
+    SpecialChain rapid_awp_osok;
+    SpecialChain rapid_scout_osok;
     SpecialChain awp_osok;
     SpecialChain scout_osok;
     SpecialChain one_deag;
 }
 
 SpecialChains player_chain_states[MAXPLAYERS + 1];
+GFLDMHudElement hud_hints[MAXPLAYERS + 1];
 
 PrivateForward stats_forward;
+PrivateForward quake_forward;
 
 bool quake_enabled[MAXPLAYERS + 1] = {true, ...};
 Cookie quake_cookie;
@@ -94,6 +98,8 @@ enum struct SoundSet {
     SoundConfig collateral;
     SoundConfig awp_elite;
     SoundConfig scout_elite;
+    SoundConfig awp_ace;
+    SoundConfig scout_ace;
 }
 
 typedef SoundConfigLoader = function bool (int client, SoundSet sound_set, SoundConfig target_config, any data);
@@ -102,16 +108,25 @@ StringMap sound_set_map;
 public void OnPluginStart() {
     GFLDM_DefineVersion("gfldm_quakesounds_version");
 
-    stats_forward = CreateForward(ET_Hook, Param_Cell, Param_Array, Param_Cell, Param_Array, Param_Cell, Param_Array, Param_Cell);
-    stats_forward.AddFunction(INVALID_HANDLE, Announce_ScoutElite);
-    stats_forward.AddFunction(INVALID_HANDLE, Announce_AWPElite);
-    stats_forward.AddFunction(INVALID_HANDLE, Announce_DeagSpree);
-    stats_forward.AddFunction(INVALID_HANDLE, Announce_Headhunter);
-    stats_forward.AddFunction(INVALID_HANDLE, Announce_Hattrick);
-    stats_forward.AddFunction(INVALID_HANDLE, Announce_Collat);
-    stats_forward.AddFunction(INVALID_HANDLE, Announce_RapidStreak);
-    stats_forward.AddFunction(INVALID_HANDLE, Announce_Streak);
-    stats_forward.AddFunction(INVALID_HANDLE, Announce_Headshot);
+    stats_forward = CreateForward(ET_Hook, Param_Cell);
+    stats_forward.AddFunction(INVALID_HANDLE, Stats_PlayScoutElite);
+    stats_forward.AddFunction(INVALID_HANDLE, Stats_PlayAWPElite);
+    stats_forward.AddFunction(INVALID_HANDLE, Stats_PlayScoutAce);
+    stats_forward.AddFunction(INVALID_HANDLE, Stats_PlayAWPAce);
+    stats_forward.AddFunction(INVALID_HANDLE, Stats_PlayDeagSpree);
+
+    quake_forward = CreateForward(ET_Hook, Param_Cell, Param_Array, Param_Cell, Param_Array, Param_Cell, Param_Array, Param_Cell);
+    quake_forward.AddFunction(INVALID_HANDLE, Announce_ScoutElite);
+    quake_forward.AddFunction(INVALID_HANDLE, Announce_AWPElite);
+    quake_forward.AddFunction(INVALID_HANDLE, Announce_ScoutAce);
+    quake_forward.AddFunction(INVALID_HANDLE, Announce_AWPAce);
+    quake_forward.AddFunction(INVALID_HANDLE, Announce_DeagSpree);
+    quake_forward.AddFunction(INVALID_HANDLE, Announce_Headhunter);
+    quake_forward.AddFunction(INVALID_HANDLE, Announce_Hattrick);
+    quake_forward.AddFunction(INVALID_HANDLE, Announce_Collat);
+    quake_forward.AddFunction(INVALID_HANDLE, Announce_RapidStreak);
+    quake_forward.AddFunction(INVALID_HANDLE, Announce_Streak);
+    quake_forward.AddFunction(INVALID_HANDLE, Announce_Headshot);
 
     quake_cookie = new Cookie("GFLDM_Quake", "", CookieAccess_Protected);
     FIRE_CLIENT_COOKIES()
@@ -120,6 +135,22 @@ public void OnPluginStart() {
 
     sound_set_map = new StringMap();
     LoadTranslations("gfldm_quakesounds.phrases");
+    for (int c = 1; c <= MaxClients; c++) {
+        if (GFLDM_IsValidClient(c)) {
+            OnClientConnected(c);
+        }
+    }
+}
+
+public void OnClientConnected(int client) {
+    hud_hints[client] = new GFLDMHudElement(client, 0.17, 0.88);
+    int color[4] = {165, 0, 165, 255};
+    hud_hints[client].SetColor(color);
+}
+
+public void OnClientDisconnect(int client) {
+    hud_hints[client].Close();
+    delete hud_hints[client];
 }
 
 LOAD_COOKIE_BOOL(quake_cookie, quake_enabled, "on", true)
@@ -238,6 +269,14 @@ void LoadSoundSets() {
                             if (!ParseSoundConfig(kv, set.awp_elite)) {
                                 LogError("Error parsing AWP elite entry");
                             }
+                        } else if (StrEqual(section_name, "ScoutAce", false)) {
+                            if (!ParseSoundConfig(kv, set.scout_ace)) {
+                                LogError("Error parsing scout ace entry");
+                            }
+                        } else if (StrEqual(section_name, "AwpAce", false)) {
+                            if (!ParseSoundConfig(kv, set.awp_ace)) {
+                                LogError("Error parsing AWP ace entry");
+                            }
                         } else if (StrEqual(section_name, "DeagleSpree", false)) {
                             if (!ParseSoundConfig(kv, set.deag_spree)) {
                                 LogError("Error parsing deag spree entry");
@@ -336,23 +375,18 @@ public void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats, 
         return;
     }
 
-    UpdateSpecialChain(stats_class, player_chain_states[client].scout_osok, STATCLASS_SCOUT_OSOK, 6.0, victims, victim_count);
-    UpdateSpecialChain(stats_class, player_chain_states[client].awp_osok, STATCLASS_AWP_OSOK, 6.0, victims, victim_count);
+    UpdateSpecialChain(stats_class, player_chain_states[client].rapid_scout_osok, STATCLASS_SCOUT_OSOK, 6.0, victims, victim_count);
+    UpdateSpecialChain(stats_class, player_chain_states[client].rapid_awp_osok, STATCLASS_AWP_OSOK, 6.0, victims, victim_count);
+    UpdateSpecialChain(stats_class, player_chain_states[client].awp_osok, STATCLASS_AWP_OSOK, 0.0, victims, victim_count);
+    UpdateSpecialChain(stats_class, player_chain_states[client].scout_osok, STATCLASS_SCOUT_OSOK, 0.0, victims, victim_count);
     UpdateSpecialChain(stats_class, player_chain_states[client].one_deag, STATCLASS_ONE_DEAG, 3.0, victims, victim_count);
     UpdateSpecialChain(stats_class, player_chain_states[client].headshot, STATCLASS_HEADSHOTS, 3.0, victims, victim_count, false);
-    UpdateSpecialChain(stats_class, player_chain_states[client].rapid_kills, STATCLASS_KILLS, 3.0, victims, victim_count, false);
-    if (player_chain_states[client].scout_osok.stat_count == SCOUT_ELITE_KREQ) {
-        PlayAnim_ScoutElite(client);
-    } else if (player_chain_states[client].awp_osok.stat_count == AWP_ELITE_KREQ) {
-        PlayAnim_AWPElite(client);
-    } else if (player_chain_states[client].one_deag.stat_count == DEAG_SPREE_KREQ) {
-        PlayAnim_DeagSpree(client);
-    }
+    UpdateSpecialChain(stats_class, player_chain_states[client].rapid_kills, STATCLASS_KILLS, 1.5, victims, victim_count, false);
 
     for (int c = 0; c < MaxClients; c++) {
         SoundSet target_sound_set;
         if (GFLDM_IsValidClient(c) && GetClientSoundSet(c, target_sound_set)) {
-            Call_StartForward(stats_forward);
+            Call_StartForward(quake_forward);
             Call_PushCell(c);
             Call_PushArray(target_sound_set, sizeof(target_sound_set));
             Call_PushCell(stats_class);
@@ -363,13 +397,21 @@ public void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats, 
             Call_Finish();
         }
     }
+
+    Call_StartForward(stats_forward);
+    Call_PushCell(client);
+    Call_Finish();
+
+    UpdateHudHint(client);
 }
 
 void UpdateSpecialChain(int stats_class, SpecialChain chain, int stat_class, float max_time, int[] victims, int victim_count, bool clean=true) {
     if (stats_class & stat_class) {
         float time = GetGameTime();
-        if (time - chain.last_stat_time > max_time) {
-            chain.stat_count = 0;
+        if (max_time > 0.0) {
+            if (time - chain.last_stat_time > max_time) {
+                chain.stat_count = 0;
+            }
         }
 
         for (int c = 0; c < victim_count; c++) {
@@ -393,12 +435,104 @@ void UpdateSpecialChain(int stats_class, SpecialChain chain, int stat_class, flo
         chain.stat_count = 0;
     } else if (stat_class & STATCLASS_DEATHS) {
         chain.stat_count = 0;
+        chain.last_stat_time = 0.0;
     }
 }
 
+void UpdateHudHint(int client) {
+    if(!GFLDM_IsValidClient(client)) {
+        return;
+    }
+
+    float time = GetGameTime();
+    if (player_chain_states[client].rapid_scout_osok.stat_count >= 3 && time - player_chain_states[client].rapid_scout_osok.last_stat_time < 6.0) {
+        hud_hints[client].Draw(600.0, "%t: %d", "Scout Elite", player_chain_states[client].rapid_scout_osok.stat_count);
+        CreateTimer(6.0, Timer_UpdateHudHint, client);
+    } else if (player_chain_states[client].rapid_awp_osok.stat_count >= 3 && time - player_chain_states[client].rapid_awp_osok.last_stat_time < 6.0) {
+        hud_hints[client].Draw(600.0, "%t: %d", "AWP Elite", player_chain_states[client].rapid_awp_osok.stat_count);
+        CreateTimer(6.0, Timer_UpdateHudHint, client);
+    } else if (player_chain_states[client].scout_osok.stat_count >= 3) {
+        hud_hints[client].Draw(600.0, "%t: %d", "Scout Ace", player_chain_states[client].scout_osok.stat_count);
+    } else if (player_chain_states[client].awp_osok.stat_count >= 3) {
+        hud_hints[client].Draw(600.0, "%t: %d", "AWP Ace", player_chain_states[client].awp_osok.stat_count);
+    } else if (player_chain_states[client].one_deag.stat_count >= 2 && time - player_chain_states[client].one_deag.last_stat_time < 3.0) {
+        hud_hints[client].Draw(600.0, "%t: %d", "Deagle Spree", player_chain_states[client].one_deag.stat_count);
+        CreateTimer(3.0, Timer_UpdateHudHint, client);
+    } else {
+        hud_hints[client].Clear();
+    }
+}
+
+Action Timer_UpdateHudHint(Handle timer, any data) {
+    int client = data;
+    if (GFLDM_IsValidClient(client)) {
+        UpdateHudHint(client);
+    }
+}
+
+Action Stats_PlayScoutElite(int client) {
+    if (player_chain_states[client].rapid_scout_osok.stat_count == SCOUT_ELITE_KREQ) {
+        PlayAnim_ScoutElite(client);
+        player_chain_states[client].rapid_scout_osok.stat_count = 0;
+        player_chain_states[client].rapid_scout_osok.last_stat_time = 0.0;
+        player_chain_states[client].scout_osok.stat_count = 0;
+        player_chain_states[client].scout_osok.last_stat_time = 0.0;
+        return Plugin_Stop;
+    }
+
+    return Plugin_Continue;
+}
+
+Action Stats_PlayAWPElite(int client) {
+    if (player_chain_states[client].rapid_awp_osok.stat_count == AWP_ELITE_KREQ) {
+        PlayAnim_AWPElite(client);
+        player_chain_states[client].rapid_awp_osok.stat_count = 0;
+        player_chain_states[client].rapid_awp_osok.last_stat_time = 0.0;
+        player_chain_states[client].awp_osok.stat_count = 0;
+        player_chain_states[client].awp_osok.last_stat_time = 0.0;
+        return Plugin_Stop;
+    }
+
+    return Plugin_Continue;
+}
+
+Action Stats_PlayScoutAce(int client) {
+    if (player_chain_states[client].scout_osok.stat_count == SCOUT_ELITE_KREQ) {
+        PlayAnim_ScoutAce(client);
+        player_chain_states[client].scout_osok.stat_count = 0;
+        player_chain_states[client].scout_osok.last_stat_time = 0.0;
+        return Plugin_Stop;
+    }
+
+    return Plugin_Continue;
+}
+
+Action Stats_PlayAWPAce(int client) {
+    if (player_chain_states[client].awp_osok.stat_count == AWP_ELITE_KREQ) {
+        PlayAnim_AWPAce(client);
+        player_chain_states[client].awp_osok.stat_count = 0;
+        player_chain_states[client].awp_osok.last_stat_time = 0.0;
+        return Plugin_Stop;
+    }
+
+    return Plugin_Continue;
+}
+
+Action Stats_PlayDeagSpree(int client) {
+    if (player_chain_states[client].one_deag.stat_count == DEAG_SPREE_KREQ) {
+        PlayAnim_DeagSpree(client);
+        player_chain_states[client].one_deag.stat_count = 0;
+        player_chain_states[client].one_deag.last_stat_time = 0.0;
+        return Plugin_Stop;
+    }
+
+    return Plugin_Continue;
+}
+
+
 Action Announce_ScoutElite(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
-    if (player_chain_states[attacker].scout_osok.stat_count == SCOUT_ELITE_KREQ) {
-        GFLDM_PrintToChat(client, "%t", "Scout Elite", attacker);
+    if (player_chain_states[attacker].rapid_scout_osok.stat_count == SCOUT_ELITE_KREQ) {
+        GFLDM_PrintToChat(client, "%t", "Announce Scout Elite", attacker);
         if (ShouldAnnounce(client, attacker, victims, victim_count, sound_set.scout_elite)) {
             GFLDMAnimation anim = GFLDM_StartAnimOne(client);
             anim.AddSound(sound_set.scout_elite.sound_file);
@@ -411,8 +545,8 @@ Action Announce_ScoutElite(int client, SoundSet sound_set, int stats_class, Play
 }
 
 Action Announce_AWPElite(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
-    if (player_chain_states[attacker].awp_osok.stat_count == AWP_ELITE_KREQ) {
-        GFLDM_PrintToChat(client, "%t", "Awp Elite", attacker);
+    if (player_chain_states[attacker].rapid_awp_osok.stat_count == AWP_ELITE_KREQ) {
+        GFLDM_PrintToChat(client, "%t", "Announce Awp Elite", attacker);
         if (ShouldAnnounce(client, attacker, victims, victim_count, sound_set.awp_elite)) {
             GFLDMAnimation anim = GFLDM_StartAnimOne(client);
             anim.AddSound(sound_set.awp_elite.sound_file);
@@ -423,9 +557,36 @@ Action Announce_AWPElite(int client, SoundSet sound_set, int stats_class, Player
     return Plugin_Continue;
 }
 
+Action Announce_ScoutAce(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
+    if (player_chain_states[attacker].scout_osok.stat_count == SCOUT_ELITE_KREQ) {
+        GFLDM_PrintToChat(client, "%t", "Announce Scout Ace", attacker);
+        if (ShouldAnnounce(client, attacker, victims, victim_count, sound_set.scout_ace)) {
+            GFLDMAnimation anim = GFLDM_StartAnimOne(client);
+            anim.AddSound(sound_set.scout_ace.sound_file);
+            anim.AddSound(THUNDER_ROLLING, 1.2, _, 0.6);
+            anim.Play();
+            return Plugin_Stop;
+        }
+    }
+    return Plugin_Continue;
+}
+
+Action Announce_AWPAce(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
+    if (player_chain_states[attacker].awp_osok.stat_count == AWP_ELITE_KREQ) {
+        GFLDM_PrintToChat(client, "%t", "Announce Awp Ace", attacker);
+        if (ShouldAnnounce(client, attacker, victims, victim_count, sound_set.awp_ace)) {
+            GFLDMAnimation anim = GFLDM_StartAnimOne(client);
+            anim.AddSound(sound_set.awp_ace.sound_file);
+            anim.Play();
+            return Plugin_Stop;
+        }
+    }
+    return Plugin_Continue;
+}
+
 Action Announce_DeagSpree(int client, SoundSet sound_set, int stats_class, PlayerStats stats, int attacker, int[] victims, int victim_count) {
     if (player_chain_states[attacker].one_deag.stat_count == DEAG_SPREE_KREQ) {
-        GFLDM_PrintToChat(client, "%t", "Deagle Spree", attacker);
+        GFLDM_PrintToChat(client, "%t", "Announce Deagle Spree", attacker);
         if (ShouldAnnounce(client, attacker, victims, victim_count, sound_set.deag_spree)) {
             GFLDMAnimation anim = GFLDM_StartAnimOne(client);
             anim.AddSound(sound_set.deag_spree.sound_file, _, SNDLEVEL_GUNFIRE);
@@ -580,11 +741,11 @@ void PlayAnim_Collat(int client, int[] victims, int victim_count) {
 
 void PlayAnim_ScoutElite(int attacker) {
     GFLDMAnimation anim = GFLDM_StartAnimAll();
-    for (int c = 0; c < player_chain_states[attacker].scout_osok.stat_count; c++) {
+    for (int c = 0; c < player_chain_states[attacker].rapid_scout_osok.stat_count; c++) {
         float origin[3];
-        origin[0] = player_chain_states[attacker].scout_osok.victim_pos_x[c];
-        origin[1] = player_chain_states[attacker].scout_osok.victim_pos_y[c];
-        origin[2] = player_chain_states[attacker].scout_osok.victim_pos_z[c] - 59.0;
+        origin[0] = player_chain_states[attacker].rapid_scout_osok.victim_pos_x[c];
+        origin[1] = player_chain_states[attacker].rapid_scout_osok.victim_pos_y[c];
+        origin[2] = player_chain_states[attacker].rapid_scout_osok.victim_pos_z[c] - 59.0;
 
         float delay = float(c) * 0.075;
         anim.AddExplosion(origin, delay);
@@ -610,6 +771,67 @@ void PlayAnim_ScoutElite(int attacker) {
 }
 
 void PlayAnim_AWPElite(int attacker) {
+    GFLDMAnimation anim = GFLDM_StartAnimAll();
+    for (int c = 0; c < player_chain_states[attacker].rapid_awp_osok.stat_count; c++) {
+        float origin[3], fire_origin[3];
+        origin[0] = player_chain_states[attacker].rapid_awp_osok.victim_pos_x[c];
+        origin[1] = player_chain_states[attacker].rapid_awp_osok.victim_pos_y[c];
+        origin[2] = player_chain_states[attacker].rapid_awp_osok.victim_pos_z[c] - 59.0;
+        fire_origin[0] = player_chain_states[attacker].rapid_awp_osok.victim_pos_x[c];
+        fire_origin[1] = player_chain_states[attacker].rapid_awp_osok.victim_pos_y[c];
+        fire_origin[2] = player_chain_states[attacker].rapid_awp_osok.victim_pos_z[c] + 65.0;
+
+        float delay = float(c) * 0.125;
+        float start[3];
+        GetLightningStart(origin, start);
+        anim.AddLightning(start, origin, delay);
+        anim.AddExplosion(origin, delay);
+        anim.AddAmbientSound(origin, THUNDER_STRIKE_ROLLING, delay, SNDLEVEL_GUNFIRE);
+        anim.AddFire(fire_origin, 3.0, delay);
+
+        delay = delay + 0.25;
+        GetLightningStart(origin, start);
+        anim.AddLightning(start, origin, delay);
+
+        delay = delay + 0.25;
+        GetLightningStart(origin, start);
+        anim.AddLightning(start, origin, delay);
+    }
+
+    anim.Play();
+}
+
+void PlayAnim_ScoutAce(int attacker) {
+    GFLDMAnimation anim = GFLDM_StartAnimAll();
+    for (int c = 0; c < player_chain_states[attacker].scout_osok.stat_count; c++) {
+        float origin[3];
+        origin[0] = player_chain_states[attacker].scout_osok.victim_pos_x[c];
+        origin[1] = player_chain_states[attacker].scout_osok.victim_pos_y[c];
+        origin[2] = player_chain_states[attacker].scout_osok.victim_pos_z[c] - 59.0;
+
+        float delay = float(c) * 0.075;
+        anim.AddExplosion(origin, delay);
+
+        delay = (float(c) * 0.125) + 1.0;
+        float start[3];
+        GetLightningStart(origin, start);
+        anim.AddLightning(start, origin, delay);
+        anim.AddExplosion(origin, delay);
+        anim.AddAmbientSound(origin, THUNDER_STRIKE_ROLLING, delay, SNDLEVEL_GUNFIRE);
+
+        delay = delay + 0.25;
+        GetLightningStart(origin, start);
+        anim.AddLightning(start, origin, delay);
+
+        delay = delay + 0.25;
+        GetLightningStart(origin, start);
+        anim.AddLightning(start, origin, delay);
+    }
+
+    anim.Play();
+}
+
+void PlayAnim_AWPAce(int attacker) {
     GFLDMAnimation anim = GFLDM_StartAnimAll();
     for (int c = 0; c < player_chain_states[attacker].awp_osok.stat_count; c++) {
         float origin[3];
