@@ -381,7 +381,7 @@ public void GFLDM_OnStatsUpdate(int client, int stats_class, PlayerStats stats, 
     UpdateSpecialChain(stats_class, player_chain_states[client].scout_osok, STATCLASS_SCOUT_OSOK, 0.0, victims, victim_count);
     UpdateSpecialChain(stats_class, player_chain_states[client].one_deag, STATCLASS_ONE_DEAG, 3.0, victims, victim_count);
     UpdateSpecialChain(stats_class, player_chain_states[client].headshot, STATCLASS_HEADSHOTS, 3.0, victims, victim_count, false);
-    UpdateSpecialChain(stats_class, player_chain_states[client].rapid_kills, STATCLASS_KILLS, 1.5, victims, victim_count, false);
+    UpdateSpecialChain(stats_class, player_chain_states[client].rapid_kills, STATCLASS_KILLS, 2.5, victims, victim_count, false);
 
     for (int c = 0; c < MaxClients; c++) {
         SoundSet target_sound_set;

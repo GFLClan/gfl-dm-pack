@@ -64,7 +64,7 @@
         "2"
         {
             "SoundFile"     "quake/standard/doublekill.mp3"
-            "Announce"      "participants"
+            "Announce"      "all"
         }
         "3"
         {
