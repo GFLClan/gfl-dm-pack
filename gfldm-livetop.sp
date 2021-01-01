@@ -40,6 +40,7 @@ enum struct StatsEntry {
 enum struct HudElements {
     GFLDMHudElement title;
     GFLDMHudElement body;
+    float last_draw;
 }
 
 typedef LineFunction = function bool (int client, char[] linebuff, int maxsize);
@@ -128,6 +129,7 @@ public void OnClientConnected(int client) {
 public void OnClientDisconnect(int client) {
     hud_elements[client].title.Close();
     hud_elements[client].body.Close();
+    hud_elements[client].last_draw = 0.0;
     delete hud_elements[client].title;
     delete hud_elements[client].body;
     
@@ -176,7 +178,7 @@ Action Timer_UpdateDisplay(Handle timer) {
     if (displayed == Display_Noscopes && !noscopesEnabled) {
         displayed = Display_KDR;
     }
-    RedrawAll();
+    RedrawAll(true);
     
     return Plugin_Continue;
 }
@@ -184,39 +186,44 @@ Action Timer_UpdateDisplay(Handle timer) {
 public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
     int client = GetClientOfUserId(event.GetInt("userid"));
     if (GFLDM_IsValidClient(client)) {
-        RedrawClient(client);
+        RedrawClient(client, true);
     }
 }
 
-void Draw(int client, const char[] title, LineFunction line_fn) {
-    hud_elements[client].title.Draw(600.0, "%t", title);
-    
-    char buffer[512];
-    RenderBody(buffer, sizeof(buffer), line_fn);
-    hud_elements[client].body.Draw(600.0, buffer);
+void Draw(int client, const char[] title, LineFunction line_fn, bool force=false) {
+    float time = GetGameTime();
+    if (time - hud_elements[client].last_draw >= 1.0 || force) {
+        hud_elements[client].title.Draw(600.0, "%t", title);
+
+        char buffer[512];
+        RenderBody(buffer, sizeof(buffer), line_fn);
+        hud_elements[client].body.Draw(600.0, buffer);
+
+        hud_elements[client].last_draw = time;
+    }
 }
 
-void RedrawClient(int client) {
+void RedrawClient(int client, bool force=false) {
     if(livetop_enabled[client] && GFLDM_IsValidClient(client)) {
         switch (displayed) {
             case Display_Accuracy:
-                Draw(client, "Highest Accuracy", RenderLine_Accuracy);
+                Draw(client, "Highest Accuracy", RenderLine_Accuracy, force);
             case Display_Headshots:
-                Draw(client, "Most Headshots", RenderLine_Headshots);
+                Draw(client, "Most Headshots", RenderLine_Headshots, force);
             case Display_Noscopes: 
-                Draw(client, "Most Noscopes", RenderLine_Noscopes);
+                Draw(client, "Most Noscopes", RenderLine_Noscopes, force);
             case Display_KDR:
-                Draw(client, "Highest KDR", RenderLine_KDR);
+                Draw(client, "Highest KDR", RenderLine_KDR, force);
             case Display_Streak:
-                Draw(client, "Highest Streak", RenderLine_Streak);
+                Draw(client, "Highest Streak", RenderLine_Streak, force);
         }
     }
 }
 
-void RedrawAll() {
+void RedrawAll(bool force=false) {
     for (int c = 0; c <= MaxClients; c++) {
         if (GFLDM_IsValidClient(c)) {
-            RedrawClient(c);
+            RedrawClient(c, force);
         }
     }
 }
@@ -238,7 +245,7 @@ void RenderBody(char[] buffer, int maxsize, LineFunction line_fn) {
 
     ImplodeStrings(lines, i, "\n", buffer, maxsize);
     // Format functions act real weird with percent signs
-    ReplaceString(buffer, maxsize, "{pct_tkn}", "%%");
+    ReplaceString(buffer, maxsize, "{pct_tkn}", "%%%%");
 }
 
 bool RenderLine_Accuracy(int j, char[] line, int maxsize) {
