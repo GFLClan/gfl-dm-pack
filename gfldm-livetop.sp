@@ -127,11 +127,11 @@ public void OnClientConnected(int client) {
 }
 
 public void OnClientDisconnect(int client) {
-    hud_elements[client].title.Close();
-    hud_elements[client].body.Close();
+    hud_elements[client].title.CloseTrie();
+    hud_elements[client].body.CloseTrie();
     hud_elements[client].last_draw = 0.0;
-    delete hud_elements[client].title;
-    delete hud_elements[client].body;
+    hud_elements[client].title = null;
+    hud_elements[client].body = null;
     
     for (int c = 0; c < sizeof(mostAccurate); c++) {
         StatsEntry zero;

@@ -52,7 +52,7 @@ methodmap GFLDMHudElement < Handle {
     public native void SetBody();
     public native void Draw(float hold_time, const char[] fmt, any ...);
     public native void Clear();
-    public native void Close();
+    public native void CloseTrie();
 }
 
 native GFLDMAnimation GFLDM_StartAnimOne(int client);

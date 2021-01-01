@@ -149,8 +149,8 @@ public void OnClientConnected(int client) {
 }
 
 public void OnClientDisconnect(int client) {
-    hud_hints[client].Close();
-    delete hud_hints[client];
+    hud_hints[client].CloseTrie();
+    hud_hints[client] = null;
 }
 
 LOAD_COOKIE_BOOL(quake_cookie, quake_enabled, "on", true)

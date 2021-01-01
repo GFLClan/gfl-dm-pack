@@ -63,7 +63,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
     CreateNative("GFLDMHudElement.SetColor", native_SetColor);
     CreateNative("GFLDMHudElement.Draw", native_Draw);
     CreateNative("GFLDMHudElement.Clear", native_Clear);
-    CreateNative("GFLDMHudElement.Close", native_CloseHud);
+    CreateNative("GFLDMHudElement.CloseTrie", native_CloseHud);
 
     RegPluginLibrary("gfldm-anim");
 }
