@@ -15,14 +15,16 @@
 // You should have received a copy of the GNU General Public License
 // along with gfl-dm-pack.  If not, see <http://www.gnu.org/licenses/>.
 
-#if defined _gfldm_chat_included
+#if defined _gfldm_web_included
     #endinput
 #endif
-#define _gfldm_chat_included
+#define _gfldm_web_included
 
-native void GFLDM_PrintToChatAll(const char[] fmt, any ...);
-native void GFLDM_PrintToChatFilter(GFLDM_ChatFilter filter_func, const char[] fmt, any ...);
-native void GFLDM_PrintToChat(int client, const char[] fmt, any ...);
-forward Action GFLDM_OnChatMessage(int client, char[] name, int name_max, char[] body, int body_max);
+typedef GFLDMWebCall = function void (GFLDMWebApi api, JSON response, any data);
+typedef GFLDMWebConnected = function void (GFLDMWebApi api, any data);
 
-typedef GFLDM_ChatFilter = function bool (int client);
+methodmap GFLDMWebApi < Handle {
+    public native GFLDMWebApi(const char[] url, const char[] api_key, const char[] channel);
+    public native void SetConnectCallback(GFLDMWebConnected callback, any data=0);
+    public native void Call(const char[] name, JSON args, GFLDMWebCall callback, any data=0);
+}

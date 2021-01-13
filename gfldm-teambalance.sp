@@ -50,9 +50,8 @@ public void Cvar_ConfigChanged(ConVar cvar, const char[] oldValue, const char[] 
     OnConfigsExecuted();
 }
 
-public void OnPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
-    int victim = GetClientOfUserId(event.GetInt("userid"));
-
+public void BalancePlayer(any data) {
+    int victim = data;
     if (GFLDM_IsValidClient(victim)) {
         int count_t = GFLDM_GetTeamCount(CS_TEAM_T);
         int count_ct = GFLDM_GetTeamCount(CS_TEAM_CT);
@@ -64,5 +63,13 @@ public void OnPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
             CS_SwitchTeam(victim, CS_TEAM_T);
             GFLDM_PrintToChat(victim, "%t", "Switched T");
         }
+    }
+}
+
+public void OnPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
+    int victim = GetClientOfUserId(event.GetInt("userid"));
+
+    if (GFLDM_IsValidClient(victim)) {
+        RequestFrame(BalancePlayer, victim);
     }
 }

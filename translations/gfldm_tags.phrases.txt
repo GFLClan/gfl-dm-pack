@@ -1,0 +1,14 @@
+"Phrases"
+{
+    "Set Name Color"
+    {
+        "#format"       "{1:s}"
+        "en"            "{normal}[{green}!tags{normal}] Set name color to {x}{1}"
+    }
+
+    "Set Name Color Console"
+    {
+        "#format"       "{1:s}"
+        "en"            "Set name color to {1}"
+    }
+}

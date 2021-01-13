@@ -30,7 +30,20 @@ public Plugin myinfo = {
     url = "https://github.com/GFLClan/gfl-dm-pack"
 };
 
+bool is_protobuf = false;
+GlobalForward forward_OnChatMessage;
+
 public void OnPluginStart() {
+    UserMsg SayText2 = GetUserMessageId("SayText2");
+
+    if (SayText2 != INVALID_MESSAGE_ID) {
+        HookUserMessage(SayText2, OnSayText2, true);
+    } else {
+        SetFailState("Unable to hook SayText2");
+    }
+    is_protobuf = CanTestFeatures() && GetFeatureStatus(FeatureType_Native, "GetUserMessageType") == FeatureStatus_Available && GetUserMessageType() == UM_Protobuf;
+    forward_OnChatMessage = new GlobalForward("GFLDM_OnChatMessage", ET_Hook, Param_Cell, Param_String, Param_Cell, Param_String, Param_Cell);
+
     GFLDM_DefineVersion("gfldm_chat_version");
 }
 
@@ -43,6 +56,11 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public int native_PrintToChatAll(Handle caller, int numParams) {
     char buffer[2048];
+    int paramOffset = 2;
+    GetNativeString(1, buffer, sizeof(buffer));
+    if (StrEqual(buffer, "%t")) {
+        paramOffset += 1;
+    }
 
     for (int client = 1; client <= MaxClients; client++) {
         if (IsClientInGame(client)) {
@@ -51,13 +69,18 @@ public int native_PrintToChatAll(Handle caller, int numParams) {
             int out_written;
             FormatNativeString(0, 1, 2, sizeof(buffer), out_written, buffer, "");
 
-            fmt_print(client, buffer, sizeof(buffer), numParams, 2);
+            fmt_print(client, buffer, sizeof(buffer), numParams, paramOffset);
         }
     }
 }
 
 public int native_PrintToChatFilter(Handle caller, int numParams) {
     char buffer[2048];
+    int paramOffset = 3;
+    GetNativeString(2, buffer, sizeof(buffer));
+    if (StrEqual(buffer, "%t")) {
+        paramOffset += 1;
+    }
     
     bool filter_res = false;
     Function filter_func = GetNativeFunction(1);
@@ -73,7 +96,7 @@ public int native_PrintToChatFilter(Handle caller, int numParams) {
             int out_written;
             FormatNativeString(0, 2, 3, sizeof(buffer), out_written, buffer, "");
 
-            fmt_print(client, buffer, sizeof(buffer), numParams, 3);
+            fmt_print(client, buffer, sizeof(buffer), numParams, paramOffset);
         }
     }
 }
@@ -85,20 +108,21 @@ public int native_PrintToChat(Handle caller, int numParams) {
         SetGlobalTransTarget(client);
 
         int out_written;
+        int paramOffset = 3;
+        GetNativeString(2, buffer, sizeof(buffer));
+        if (StrEqual(buffer, "%t")) {
+            paramOffset += 1;
+        }
         FormatNativeString(0, 2, 3, sizeof(buffer), out_written, buffer, "");
 
-        fmt_print(client, buffer, sizeof(buffer), numParams, 3);
+        fmt_print(client, buffer, sizeof(buffer), numParams, paramOffset);
     }
 }
 
 void fmt_print(int client, char[] buffer, int maxsize, int numParams, int paramOffset) {
     char replace_buffer[64];
     char color_buff[24];
-    if (StrContains(buffer, "%t")) {
-        paramOffset += 1;
-    }
     for (int c = paramOffset; c < numParams + 1; c++) {
-        int cell_at = GetNativeCellRef(c);
         Format(replace_buffer, sizeof(replace_buffer), "{teamcolor[%d]}", (c - paramOffset) + 1);
         if (StrContains(buffer, replace_buffer) != -1) {
             GetTeamColor(GetNativeCellRef(c), color_buff, sizeof(color_buff));
@@ -126,8 +150,88 @@ void fmt_print(int client, char[] buffer, int maxsize, int numParams, int paramO
         Color_CT(color_buff, sizeof(color_buff));
         ReplaceString(buffer, maxsize, "{team_t}", color_buff);
     }
+    ReplaceString(buffer, maxsize, "{x}", "\x07");
 
+    GFLDM_UescapeStr(buffer, maxsize);
     PrintToChat(client, buffer);
+}
+
+public Action OnSayText2(UserMsg msg_id, BfRead msg, const int[] players, int playersNum, bool reliable, bool init) {
+    int author = is_protobuf ? PbReadInt(msg, "ent_idx") : BfReadByte(msg);
+    if (!GFLDM_IsValidClient(author)) {
+        return Plugin_Continue;
+    }
+
+    bool is_chat = is_protobuf ? PbReadBool(msg, "chat") : BfReadByte(msg);
+    char msg_name[32];
+    if (is_protobuf) {
+        PbReadString(msg, "msg_name", msg_name, sizeof(msg_name));
+    } else {
+        BfReadString(msg, msg_name, sizeof(msg_name));
+    }
+    
+    char name[128];
+    if (is_protobuf) {
+        PbReadString(msg, "params", name, sizeof(name));
+    } else {
+        BfReadString(msg, name, sizeof(name));
+    }
+    char msg_body[256];
+    if (is_protobuf) {
+        PbReadString(msg, "params", msg_body, sizeof(msg_body));
+    } else {
+        BfReadString(msg, msg_body, sizeof(msg_body));
+    }
+    GFLDM_EscapeStr(msg_body, sizeof(msg_body));
+
+    Action result;
+    Call_StartForward(forward_OnChatMessage);
+    Call_PushCell(author);
+    Call_PushStringEx(name, sizeof(name), SM_PARAM_STRING_COPY, SM_PARAM_COPYBACK);
+    Call_PushCell(sizeof(name));
+    Call_PushStringEx(msg_body, sizeof(msg_body), SM_PARAM_STRING_COPY, SM_PARAM_COPYBACK);
+    Call_PushCell(sizeof(msg_body));
+    Call_Finish(result);
+    if (result < Plugin_Handled) {
+        char buffer[512];
+        Format(buffer, sizeof(buffer), "{teamcolor[1]}%s{normal}: %s", name, msg_body);
+        ArrayList pack = new ArrayList(512);
+        pack.Push(author);
+        pack.PushArray(players, playersNum);
+        pack.Push(playersNum);
+        pack.PushString(buffer);
+        RequestFrame(PrintMessage, pack);
+        return Plugin_Handled;
+    }
+
+    return Plugin_Handled;
+}
+
+void GFLDM_EscapeStr(char[] buffer, int maxsize) {
+    ReplaceString(buffer, maxsize, "&", "&amp;");
+    ReplaceString(buffer, maxsize, "{", "&lb;");
+    ReplaceString(buffer, maxsize, "}", "&rb;");
+}
+
+
+void GFLDM_UescapeStr(char[] buffer, int maxsize) {
+    ReplaceString(buffer, maxsize, "&amp;", "&");
+    ReplaceString(buffer, maxsize, "&lb;", "{");
+    ReplaceString(buffer, maxsize, "&rb;", "}");
+}
+
+public void PrintMessage(any data) {
+    ArrayList pack = data;
+    int author = pack.Get(0);
+    int players_num = pack.Get(2);
+    int players[MAXPLAYERS];
+    pack.GetArray(1, players, players_num);
+    char buffer[512];
+    pack.GetString(3, buffer, sizeof(buffer));
+
+    for (int c = 0; c < players_num; c++) {
+        GFLDM_PrintToChat(players[c], buffer, author);
+    }
 }
 
 stock void GetTeamColor(int client, char[] color_buff, int maxsize) {
