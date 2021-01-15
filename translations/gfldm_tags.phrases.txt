@@ -11,4 +11,14 @@
         "#format"       "{1:s}"
         "en"            "Set name color to {1}"
     }
+
+    "Reset Tag"
+    {
+        "en"            "{normal}[{green}!tags{normal}] You tag has been reset"
+    }
+
+    "Reset Tag Console"
+    {
+        "en"            "You tag has been reset"
+    }
 }

@@ -228,6 +228,7 @@ public void PrintMessage(any data) {
     pack.GetArray(1, players, players_num);
     char buffer[512];
     pack.GetString(3, buffer, sizeof(buffer));
+    delete pack;
 
     for (int c = 0; c < players_num; c++) {
         GFLDM_PrintToChat(players[c], buffer, author);
