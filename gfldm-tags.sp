@@ -53,10 +53,10 @@ public Action ConCmd_Tags(int client, int args) {
         return Plugin_Handled;
     }
 
-    Menu menu = new Menu(Menu_Tags);
-    menu.AddItem("pick_tag", "Change tag");
-    menu.AddItem("reset_tag", "Reset tag");
-    menu.AddItem("disable_tag", "Disable tag");
+    Menu menu = new Menu(Menu_Tags, MenuAction_DisplayItem);
+    menu.AddItem("pick_tag", "Menu Change Tag");
+    menu.AddItem("reset_tag", "Menu Reset Tag");
+    menu.AddItem("disable_tag", "Menu Disable Tag");
     menu.SetTitle("!tags");
     menu.Display(client, MENU_TIME_FOREVER);
     return Plugin_Handled;
@@ -207,23 +207,19 @@ public int Menu_Tags(Menu menu, MenuAction action, int param1, int param2) {
     int client = param1;
     if (action == MenuAction_Select) {
         if (!GFLDM_IsValidClient(client)) {
-            return;
+            return 0;
         }
 
         char info[32];
         if (menu.GetItem(param2, info, sizeof(info))) {
             char auth_id[32];
             if (!GetClientAuthId(client, AuthId_Steam3, auth_id, sizeof(auth_id))) {
-                return;
+                return 0;
             }
 
             if (StrEqual(info, "pick_tag")) {
                 JSON payload = new JSON();
-                int admin_flags = 0;
-                AdminId admin = GetUserAdmin(client);
-                if (admin != INVALID_ADMIN_ID) {
-                    admin_flags = GetAdminFlags(admin, Access_Effective);
-                }
+                int admin_flags = GFLDM_GetAdminFlags(client);
                 payload.SetString("steamid", auth_id);
                 payload.SetInt("admin_flags", admin_flags);
                 api.Call("get_player_tags", payload, Callback_PickTag, client);
@@ -240,9 +236,18 @@ public int Menu_Tags(Menu menu, MenuAction action, int param1, int param2) {
                 delete payload;
             }
         }
-    } else if (action == MenuAction_End || action == MenuAction_Cancel) {
+    } else if (action == MenuAction_DisplayItem) {
+        char display[64];
+        menu.GetItem(param2, "", 0, _, display, sizeof(display));
+
+        char buffer[255];
+        Format(buffer, sizeof(buffer), "%T", display, param1);
+        return RedrawMenuItem(buffer);
+    } else if (action == MenuAction_End) {
         delete menu;
     }
+
+    return 0;
 }
 
 public int Menu_PickTag(Menu menu, MenuAction action, int param1, int param2) {
@@ -266,7 +271,7 @@ public int Menu_PickTag(Menu menu, MenuAction action, int param1, int param2) {
             api.Call("set_tag", payload, Callback_SetTag, client);
             delete payload;
         }
-    } else if (action == MenuAction_End || action == MenuAction_Cancel) {
+    } else if (action == MenuAction_End) {
         delete menu;
     }
 }
@@ -303,6 +308,7 @@ public void Callback_PickTag(GFLDMWebApi _api, JSON response, any data) {
         menu.AddItem(tag_id, tag_name);
         delete tag;
     }
+    menu.SetTitle("Pick a new tag");
     menu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -442,6 +448,10 @@ public void Callback_TagsLoaded(GFLDMWebApi _api, JSON response, any data) {
 
         if (strlen(config.name_color) > 0) {
             config.name_type = config.name_type | COLORTYPE_SOLID;
+        }
+
+        if (strlen(config.chat_color) > 0) {
+            config.chat_type = config.chat_type | COLORTYPE_SOLID;
         }
 
         player_configs[client] = config;

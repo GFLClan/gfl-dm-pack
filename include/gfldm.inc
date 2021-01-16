@@ -69,3 +69,20 @@ stock any GFLDM_GetNativeHandle(int param) {
 
     return hndl;
 }
+
+stock int GFLDM_GetAdminFlags(int client) {
+    if (!GFLDM_IsValidClient(client)) {
+        return 0;
+    }
+
+    int admin_flags = 0;
+    AdminId admin = GetUserAdmin(client);
+    if (admin != INVALID_ADMIN_ID) {
+        admin_flags = GetAdminFlags(admin, Access_Effective);
+        if (admin_flags & ADMFLAG_ROOT) {
+            admin_flags = ~0;
+        }
+    }
+
+    return admin_flags;
+}

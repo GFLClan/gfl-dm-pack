@@ -6,7 +6,7 @@ defmodule GfldmWeb.Tags do
   import Ecto.Query, warn: false
   alias GfldmWeb.Repo
 
-  alias GfldmWeb.Tags.{TagPattern, TagOverride}
+  alias GfldmWeb.Tags.TagPattern
 
   @doc """
   Returns the list of gfldm_tag_patterns.

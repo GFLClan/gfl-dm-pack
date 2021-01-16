@@ -65,5 +65,19 @@
     {
         "en"            "You tag has been updated"
     }
-}
+
+    "Menu Change Tag"
+    {
+        "en"            "Change tag"
+    }
+
+    "Menu Reset Tag"
+    {
+        "en"            "Reset tag"
+    }
+
+    "Menu Disable Tag"
+    {
+        "en"            "Disable tag"
+    }
 }
