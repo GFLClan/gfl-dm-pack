@@ -1,13 +1,26 @@
 defmodule GfldmWebWeb.ServerTagsChannel do
   use Phoenix.Channel
 
-  def join("tags:" <> server_id, _params, socket) do
-    IO.puts("Server #{server_id} joined")
-    {:ok, socket}
+  defp authorized?(server_id, api_key) do
+    case GfldmWeb.Servers.get_server(server_id) do
+      %GfldmWeb.Servers.Server{api_key: ^api_key} -> true
+      _ -> false
+    end
+  end
+
+  def join("tags:" <> server_id, %{"api_key" => api_key}, socket) do
+    case Integer.parse(server_id) do
+      {id, ""} -> if authorized?(id, api_key) do
+          {:ok, assign(socket, :server_id, id)}
+        else
+          {:error, %{reason: "Unauthorized"}}
+        end
+      _ -> {:error, %{reason: "Invalid server ID"}}
+    end
   end
 
   def handle_in("load_tags", %{"steamid" => steamid}, socket) do
-    case GfldmWeb.Tags.load_player_tag_config(steamid) do
+    case GfldmWeb.Tags.load_player_tag_config(steamid, socket.assigns[:server_id]) do
       nil -> {:reply, :not_found, socket}
       player -> case resolve_tag_config(player) do
         nil -> {:reply, :not_found, socket}
@@ -17,7 +30,7 @@ defmodule GfldmWebWeb.ServerTagsChannel do
   end
 
   def handle_in("reset_tag", %{"steamid" => steamid} = params, socket) do
-    case GfldmWeb.Tags.load_player_tag_config(steamid) do
+    case GfldmWeb.Tags.load_player_tag_config(steamid, socket.assigns[:server_id]) do
       nil -> {:reply, :not_found, socket}
       %GfldmWeb.Players.Player{tag: nil} -> {:reply, :ok, socket}
       %{tag: tag} ->
@@ -35,7 +48,7 @@ defmodule GfldmWebWeb.ServerTagsChannel do
   end
 
   def handle_in("disable_tag", %{"steamid" => steamid} = params, socket) do
-    case GfldmWeb.Tags.load_player_tag_config(steamid) do
+    case GfldmWeb.Tags.load_player_tag_config(steamid, socket.assigns[:server_id]) do
       nil -> {:reply, :not_found, socket}
       %GfldmWeb.Players.Player{tag: nil} -> {:reply, :ok, socket}
       %{tag: tag} ->
@@ -54,9 +67,9 @@ defmodule GfldmWebWeb.ServerTagsChannel do
   end
 
   def handle_in("set_name_color", %{"steamid" => steamid, "name_color" => color}, socket) do
-    case GfldmWeb.Tags.load_player_tag_config(steamid) do
+    case GfldmWeb.Tags.load_player_tag_config(steamid, socket.assigns[:server_id]) do
       nil ->
-        {:ok, player} = GfldmWeb.Players.create_player(%{steamid: steamid})
+        {:ok, player} = GfldmWeb.Players.create_player(%{steamid: steamid, server_id: socket.assigns[:server_id]})
         {:ok, _} = GfldmWeb.Tags.create_player_tag(%{player_id: player.id, name_color: color})
         {:reply, {:ok, %{name_color: color}}, socket}
       %GfldmWeb.Players.Player{tag: nil} = player ->
@@ -69,9 +82,9 @@ defmodule GfldmWebWeb.ServerTagsChannel do
   end
 
   def handle_in("set_chat_color", %{"steamid" => steamid, "chat_color" => color}, socket) do
-    case GfldmWeb.Tags.load_player_tag_config(steamid) do
+    case GfldmWeb.Tags.load_player_tag_config(steamid, socket.assigns[:server_id]) do
       nil ->
-        {:ok, player} = GfldmWeb.Players.create_player(%{steamid: steamid})
+        {:ok, player} = GfldmWeb.Players.create_player(%{steamid: steamid, server_id: socket.assigns[:server_id]})
         {:ok, _} = GfldmWeb.Tags.create_player_tag(%{player_id: player.id, chat_color: color})
         {:reply, {:ok, %{chat_color: color}}, socket}
       %GfldmWeb.Players.Player{tag: nil} = player ->
@@ -84,9 +97,9 @@ defmodule GfldmWebWeb.ServerTagsChannel do
   end
 
   def handle_in("set_tag_color", %{"steamid" => steamid, "tag_color" => color}, socket) do
-    case GfldmWeb.Tags.load_player_tag_config(steamid) do
+    case GfldmWeb.Tags.load_player_tag_config(steamid, socket.assigns[:server_id]) do
       nil ->
-        {:ok, player} = GfldmWeb.Players.create_player(%{steamid: steamid})
+        {:ok, player} = GfldmWeb.Players.create_player(%{steamid: steamid, server_id: socket.assigns[:server_id]})
         {:ok, _} = GfldmWeb.Tags.create_player_tag(%{player_id: player.id, tag_color: color})
         {:reply, {:ok, %{tag_color: color}}, socket}
       %GfldmWeb.Players.Player{tag: nil} = player ->
@@ -111,9 +124,9 @@ defmodule GfldmWebWeb.ServerTagsChannel do
   end
 
   def handle_in("set_tag", %{"steamid" => steamid, "tag_id" => tag_id}, socket) do
-    case GfldmWeb.Tags.load_player_tag_config(steamid) do
+    case GfldmWeb.Tags.load_player_tag_config(steamid, socket.assigns[:server_id]) do
       nil ->
-        {:ok, player} = GfldmWeb.Players.create_player(%{steamid: steamid})
+        {:ok, player} = GfldmWeb.Players.create_player(%{steamid: steamid, server_id: socket.assigns[:server_id]})
         {:ok, _} = GfldmWeb.Tags.create_player_tag(%{player_id: player.id, tag_id: tag_id})
         {:reply, {:ok, %{tag_id: tag_id}}, socket}
       %GfldmWeb.Players.Player{tag: nil} = player ->

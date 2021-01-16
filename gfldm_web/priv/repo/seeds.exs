@@ -11,7 +11,8 @@
 # and so on) as they will fail if something goes wrong.
 use Bitwise
 
-{:ok, player} = GfldmWeb.Players.create_player(%{steamid: "[U:1:24408691]"})
+{:ok, server} = GfldmWeb.Servers.create_server(%{name: "Test Server", api_key: "api_key_123"})
+{:ok, player} = GfldmWeb.Players.create_player(%{steamid: "[U:1:24408691]", server_id: server.id})
 {:ok, pattern} = GfldmWeb.Tags.create_tag_pattern(%{name: "Pride", pattern: "e40303;ff8c00;ffed00;008026;004dff;750787", admin_flags: 1 <<< 14})
 {:ok, tag} = GfldmWeb.Tags.create_tag(%{name: "Dreae", tag: "Dr.eae", default_pattern: pattern.id})
 {:ok, _} = GfldmWeb.Tags.create_tag_override(%{player_id: player.id, tag_id: tag.id})

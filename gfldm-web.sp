@@ -95,9 +95,16 @@ public void Connect_Callback(WebSocket ws, any data) {
     self.SetValue("heartbeat_timer", timer);
     self.SetValue("connected", true);
 
+    char api_key[128];
+    self.GetString("api_key", api_key, sizeof(api_key));
+
     JSON msg = CreateMessage(self, "phx_join");
+    JSON payload = new JSON();
+    payload.SetString("api_key", api_key);
+    msg.SetJSON("payload", payload);
     ws.Write(msg);
     delete msg;
+    delete payload;
 }
 
 JSON CreateMessage(StringMap self, const char[] event) {

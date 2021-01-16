@@ -43,7 +43,7 @@ public void OnPluginStart() {
     RegConsoleCmd("sm_resettag", ConCmd_ResetTag, "Reset your tag customizations");
     RegConsoleCmd("sm_disabletag", ConCmd_DisableTag, "Disable your tag");
     RegConsoleCmd("sm_tags", ConCmd_Tags, "Adjust tag settings");
-    api = new GFLDMWebApi("ws://localhost:4000/api/servers/socket/websocket", "api_key", "tags:1");
+    api = new GFLDMWebApi("ws://localhost:4000/api/servers/socket/websocket", "api_key_123", "tags:1");
     api.SetConnectCallback(Callback_ChannelConnected);
     LoadTranslations("gfldm_tags.phrases");
 }

@@ -302,8 +302,8 @@ defmodule GfldmWeb.Tags do
     PlayerTag.changeset(player_tag, attrs)
   end
 
-  def load_player_tag_config(steamid) do
-    Repo.one(from p in GfldmWeb.Players.Player, where: p.steamid == ^steamid, preload: [tag: [:tag_pattern, :chat_pattern, :name_pattern, [tag: :pattern]]])
+  def load_player_tag_config(steamid, server_id) do
+    Repo.one(from p in GfldmWeb.Players.Player, where: p.steamid == ^steamid and p.server_id == ^server_id, preload: [tag: [:tag_pattern, :chat_pattern, :name_pattern, [tag: :pattern]]])
   end
 
   def list_tag_presets(admin_flags) do
