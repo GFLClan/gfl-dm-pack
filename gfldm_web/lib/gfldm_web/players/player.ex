@@ -5,6 +5,7 @@ defmodule GfldmWeb.Players.Player do
   schema "gfldm_players" do
     field :steamid, :string
     has_one :tag, GfldmWeb.Tags.PlayerTag
+    has_many :tag_overrides, GfldmWeb.Tags.TagOverride
 
     timestamps()
   end

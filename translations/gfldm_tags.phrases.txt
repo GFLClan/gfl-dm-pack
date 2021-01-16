@@ -12,6 +12,30 @@
         "en"            "Set name color to {1}"
     }
 
+    "Set Tag Color"
+    {
+        "#format"       "{1:s}"
+        "en"            "{normal}[{green}!tags{normal}] Set tag color to {x}{1}"
+    }
+
+    "Set Tag Color Console"
+    {
+        "#format"       "{1:s}"
+        "en"            "Set tag color to {1}"
+    }
+
+    "Set Chat Color"
+    {
+        "#format"       "{1:s}"
+        "en"            "{normal}[{green}!tags{normal}] Set chat color to {x}{1}"
+    }
+
+    "Set Chat Color Console"
+    {
+        "#format"       "{1:s}"
+        "en"            "Set chat color to {1}"
+    }
+
     "Reset Tag"
     {
         "en"            "{normal}[{green}!tags{normal}] You tag has been reset"
@@ -21,4 +45,25 @@
     {
         "en"            "You tag has been reset"
     }
+
+    "Disable Tag"
+    {
+        "en"            "{normal}[{green}!tags{normal}] You tag has been disabled"
+    }
+
+    "Disable Tag Console"
+    {
+        "en"            "You tag has been disabled"
+    }
+
+    "Tag Changed"
+    {
+        "en"            "{normal}[{green}!tags{normal}] You tag has been updated"
+    }
+
+    "Tag Changed Console"
+    {
+        "en"            "You tag has been updated"
+    }
+}
 }

@@ -103,4 +103,8 @@ defmodule GfldmWeb.Players do
   def change_player(%Player{} = player, attrs \\ %{}) do
     Player.changeset(player, attrs)
   end
+
+  def load_player_tags(steamid) do
+    Repo.one(from p in Player, where: p.steamid == ^steamid, preload: [tag_overrides: [tag: :pattern]])
+  end
 end

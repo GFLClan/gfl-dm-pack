@@ -73,7 +73,7 @@ public int native_Call(Handle plugin, int num_params) {
 
     DataPack pack = new DataPack();
     pack.WriteCell(ref);
-    pack.WriteFloat(GetGameTime());
+    pack.WriteFloat(GetTickedTime());
     pack.WriteCell(plugin);
     pack.WriteFunction(callback);
     pack.WriteCell(data);
@@ -167,7 +167,7 @@ public void Read_Callback(WebSocket ws, JSON response, any data) {
     } else if (ref != -1) {
         ArrayList callbacks;
         if (self.GetValue("callbacks", callbacks)) {
-            float time = GetGameTime();
+            float time = GetTickedTime();
             for (int c = 0; c < callbacks.Length; c++) {
                 DataPack pack = callbacks.Get(c);
                 pack.Reset();
@@ -192,7 +192,7 @@ public void Read_Callback(WebSocket ws, JSON response, any data) {
                     delete phx_resp;
                     break;
                 } else if (time - pack_time > 30.0) {
-                    LogMessage("Removing callback for message ID %d: Timeout expired", ref);
+                    LogMessage("Removing callback for message ID %d: Timed out after %f seconds", ref, time - pack_time);
                     callbacks.Erase(c);
                     delete pack;
                 }

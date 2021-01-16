@@ -14,4 +14,5 @@ use Bitwise
 {:ok, player} = GfldmWeb.Players.create_player(%{steamid: "[U:1:24408691]"})
 {:ok, pattern} = GfldmWeb.Tags.create_tag_pattern(%{name: "Pride", pattern: "e40303;ff8c00;ffed00;008026;004dff;750787", admin_flags: 1 <<< 14})
 {:ok, tag} = GfldmWeb.Tags.create_tag(%{name: "Dreae", tag: "Dr.eae", default_pattern: pattern.id})
+{:ok, _} = GfldmWeb.Tags.create_tag_override(%{player_id: player.id, tag_id: tag.id})
 {:ok, _} = GfldmWeb.Tags.create_player_tag(%{player_id: player.id, tag_id: tag.id})

@@ -6,7 +6,7 @@ defmodule GfldmWeb.Tags do
   import Ecto.Query, warn: false
   alias GfldmWeb.Repo
 
-  alias GfldmWeb.Tags.TagPattern
+  alias GfldmWeb.Tags.{TagPattern, TagOverride}
 
   @doc """
   Returns the list of gfldm_tag_patterns.
@@ -304,5 +304,15 @@ defmodule GfldmWeb.Tags do
 
   def load_player_tag_config(steamid) do
     Repo.one(from p in GfldmWeb.Players.Player, where: p.steamid == ^steamid, preload: [tag: [:tag_pattern, :chat_pattern, :name_pattern, [tag: :pattern]]])
+  end
+
+  def list_tag_presets(admin_flags) do
+    Repo.all(from t in Tag, where: fragment("(? & ?)", t.admin_flags, ^admin_flags) != 0, preload: [:pattern])
+  end
+
+  def create_tag_override(attrs \\ %{}) do
+    %GfldmWeb.Tags.TagOverride{}
+    |> GfldmWeb.Tags.TagOverride.changeset(attrs)
+    |> Repo.insert()
   end
 end

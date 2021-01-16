@@ -14,23 +14,22 @@ public Plugin myinfo = {
 
 GFLDMWebApi api = null;
 
-enum ColorType {
-    ColorType_None = 0,
-    ColorType_Solid,
-    ColorType_Pattern
-}
+#define COLORTYPE_NONE    0
+#define COLORTYPE_SOLID   (1<<1)
+#define COLORTYPE_PATTERN (1<<2)
+#define COLORTYPE_DEFAULT (1<<16)
 
 enum struct PlayerTagConfig {
     char tag[32];
-    ColorType tag_type;
+    int tag_type;
     char tag_pattern[128];
     char tag_color[32];
 
-    ColorType name_type;
+    int name_type;
     char name_pattern[128];
     char name_color[32];
 
-    ColorType chat_type;
+    int chat_type;
     char chat_pattern[128];
     char chat_color[32];
 }
@@ -40,10 +39,27 @@ PlayerTagConfig player_configs[MAXPLAYERS + 1];
 public void OnPluginStart() {
     RegConsoleCmd("sm_namecolor", ConCmd_NameColor, "Set your name color in hexidecimal format, i.e ff22e2");
     RegConsoleCmd("sm_tagcolor", ConCmd_TagColor, "Set your tag color in hexidecimal format, i.e ff22e2");
+    RegConsoleCmd("sm_chatcolor", ConCmd_ChatColor, "Set your chat color in hexidecimal format, i.e ff22e2");
     RegConsoleCmd("sm_resettag", ConCmd_ResetTag, "Reset your tag customizations");
+    RegConsoleCmd("sm_disabletag", ConCmd_DisableTag, "Disable your tag");
+    RegConsoleCmd("sm_tags", ConCmd_Tags, "Adjust tag settings");
     api = new GFLDMWebApi("ws://localhost:4000/api/servers/socket/websocket", "api_key", "tags:1");
     api.SetConnectCallback(Callback_ChannelConnected);
     LoadTranslations("gfldm_tags.phrases");
+}
+
+public Action ConCmd_Tags(int client, int args) {
+    if (!GFLDM_IsValidClient(client)) {
+        return Plugin_Handled;
+    }
+
+    Menu menu = new Menu(Menu_Tags);
+    menu.AddItem("pick_tag", "Change tag");
+    menu.AddItem("reset_tag", "Reset tag");
+    menu.AddItem("disable_tag", "Disable tag");
+    menu.SetTitle("!tags");
+    menu.Display(client, MENU_TIME_FOREVER);
+    return Plugin_Handled;
 }
 
 public Action ConCmd_ResetTag(int client, int args) {
@@ -54,6 +70,20 @@ public Action ConCmd_ResetTag(int client, int args) {
     JSON payload = new JSON();
     payload.SetString("steamid", steam_id);
     api.Call("reset_tag", payload, Callback_ResetTag, client);
+    delete payload;
+
+    return Plugin_Handled;
+}
+
+
+public Action ConCmd_DisableTag(int client, int args) {
+    char steam_id[32];
+    if (!GetClientAuthId(client, AuthId_Steam3, steam_id, sizeof(steam_id))) {
+        return Plugin_Handled;
+    }
+    JSON payload = new JSON();
+    payload.SetString("steamid", steam_id);
+    api.Call("disable_tag", payload, Callback_DisableTag, client);
     delete payload;
 
     return Plugin_Handled;
@@ -119,9 +149,39 @@ public Action ConCmd_TagColor(int client, int args) {
     return Plugin_Handled;
 }
 
+public Action ConCmd_ChatColor(int client, int args) {
+    if (!GFLDM_IsValidClient(client)) {
+        return Plugin_Handled;
+    }
+
+    if (args < 1) {
+        Usage_ChatColor(client);
+        return Plugin_Handled;
+    }
+
+    char color[7];
+    GetCmdArg(1, color, sizeof(color));
+    if (strlen(color) != 6) {
+        Usage_ChatColor(client);
+        return Plugin_Handled;
+    }
+    char steam_id[32];
+    if (!GetClientAuthId(client, AuthId_Steam3, steam_id, sizeof(steam_id))) {
+        return Plugin_Handled;
+    }
+
+    JSON payload = new JSON();
+    payload.SetString("steamid", steam_id);
+    payload.SetString("chat_color", color);
+    api.Call("set_chat_color", payload, Callback_SetChatColor, client);
+    delete payload;
+
+    return Plugin_Handled;
+}
+
 void Usage_NameColor(int client) {
     if (GetCmdReplySource() == SM_REPLY_TO_CHAT) {
-        ReplyToCommand(client, "\"!namecolor <color>\" - i.e. \x07ff22e2 ff22e2");
+        ReplyToCommand(client, "[!tags] \"!namecolor <color>\"");
     } else {
         ReplyToCommand(client, "\"sm_namecolor <color>\" - i.e ff22e2");
     }
@@ -129,9 +189,94 @@ void Usage_NameColor(int client) {
 
 void Usage_TagColor(int client) {
     if (GetCmdReplySource() == SM_REPLY_TO_CHAT) {
-        ReplyToCommand(client, "\"!tagcolor <color>\" - i.e. \x07ff22e2 ff22e2");
+        ReplyToCommand(client, "[!tags] \"!tagcolor <color>\"");
     } else {
         ReplyToCommand(client, "\"sm_tagcolor <color>\" - i.e ff22e2");
+    }
+}
+
+void Usage_ChatColor(int client) {
+    if (GetCmdReplySource() == SM_REPLY_TO_CHAT) {
+        ReplyToCommand(client, "[!tags] \"!chatcolor <color>\"");
+    } else {
+        ReplyToCommand(client, "\"sm_chatcolor <color>\" - i.e ff22e2");
+    }
+}
+
+public int Menu_Tags(Menu menu, MenuAction action, int param1, int param2) {
+    int client = param1;
+    if (action == MenuAction_Select) {
+        if (!GFLDM_IsValidClient(client)) {
+            return;
+        }
+
+        char info[32];
+        if (menu.GetItem(param2, info, sizeof(info))) {
+            char auth_id[32];
+            if (!GetClientAuthId(client, AuthId_Steam3, auth_id, sizeof(auth_id))) {
+                return;
+            }
+
+            if (StrEqual(info, "pick_tag")) {
+                JSON payload = new JSON();
+                int admin_flags = 0;
+                AdminId admin = GetUserAdmin(client);
+                if (admin != INVALID_ADMIN_ID) {
+                    admin_flags = GetAdminFlags(admin, Access_Effective);
+                }
+                payload.SetString("steamid", auth_id);
+                payload.SetInt("admin_flags", admin_flags);
+                api.Call("get_player_tags", payload, Callback_PickTag, client);
+                delete payload;
+            } else if (StrEqual(info, "disable_tag")) {
+                JSON payload = new JSON();
+                payload.SetString("steamid", auth_id);
+                api.Call("disable_tag", payload, Callback_DisableTag, client);
+                delete payload;
+            } else if (StrEqual(info, "reset_tag")) {
+                JSON payload = new JSON();
+                payload.SetString("steamid", auth_id);
+                api.Call("reset_tag", payload, Callback_ResetTag, client);
+                delete payload;
+            }
+        }
+    } else if (action == MenuAction_End || action == MenuAction_Cancel) {
+        delete menu;
+    }
+}
+
+public int Menu_PickTag(Menu menu, MenuAction action, int param1, int param2) {
+    int client = param1;
+    if (action == MenuAction_Select) {
+        if (!GFLDM_IsValidClient(client)) {
+            return;
+        }
+
+        char info[32];
+        if (menu.GetItem(param2, info, sizeof(info))) {
+            char auth_id[32];
+            if (!GetClientAuthId(client, AuthId_Steam3, auth_id, sizeof(auth_id))) {
+                return;
+            }
+            int tag_id = StringToInt(info);
+
+            JSON payload = new JSON();
+            payload.SetString("steamid", auth_id);
+            payload.SetInt("tag_id", tag_id);
+            api.Call("set_tag", payload, Callback_SetTag, client);
+            delete payload;
+        }
+    } else if (action == MenuAction_End || action == MenuAction_Cancel) {
+        delete menu;
+    }
+}
+
+public void Callback_SetTag(GFLDMWebApi _api, JSON response, any data) {
+    int client = data;
+    if (GFLDM_IsValidClient(client)) {
+        GFLDM_PrintToChat(client, "%t", "Tag Changed");
+        PrintToConsole(client, "%t", "Tag Changed Console");
+        Callback_TagsLoaded(_api, response, data);
     }
 }
 
@@ -144,13 +289,40 @@ public void Callback_ResetTag(GFLDMWebApi _api, JSON response, any data) {
     }
 }
 
+public void Callback_PickTag(GFLDMWebApi _api, JSON response, any data) {
+    int client = data;
+    if (!GFLDM_IsValidClient(client)) {
+        return;
+    }
+    Menu menu = new Menu(Menu_PickTag);
+    for (int c = 0; c < response.GetArraySize(); c++) {
+        JSON tag = response.GetArrayJSON(c);
+        char tag_name[32], tag_id[12];
+        IntToString(tag.GetInt("tag_id"), tag_id, sizeof(tag_id));
+        tag.GetString("tag", tag_name, sizeof(tag_name));
+        menu.AddItem(tag_id, tag_name);
+        delete tag;
+    }
+    menu.Display(client, MENU_TIME_FOREVER);
+}
+
+public void Callback_DisableTag(GFLDMWebApi _api, JSON response, any data) {
+    int client = data;
+    if (GFLDM_IsValidClient(client)) {
+        GFLDM_PrintToChat(client, "%t", "Disable Tag");
+        PrintToConsole(client, "%t", "Disable Tag Console");
+        PlayerTagConfig zero;
+        player_configs[client] = zero;
+    }
+}
+
 public void Callback_SetNameColor(GFLDMWebApi _api, JSON response, any data) {
     int client = data;
     if (GFLDM_IsValidClient(client)) {
 
         response.GetString("name_color", player_configs[client].name_color, sizeof(player_configs[].name_color));
-        if (player_configs[client].name_type == ColorType_None) {
-            player_configs[client].name_type = ColorType_Solid;
+        if (player_configs[client].name_type == COLORTYPE_NONE || player_configs[client].name_type & COLORTYPE_DEFAULT) {
+            player_configs[client].name_type = COLORTYPE_SOLID;
         }
 
         GFLDM_PrintToChat(client, "%t", "Set Name Color", player_configs[client].name_color);
@@ -163,12 +335,26 @@ public void Callback_SetTagColor(GFLDMWebApi _api, JSON response, any data) {
     if (GFLDM_IsValidClient(client)) {
 
         response.GetString("tag_color", player_configs[client].tag_color, sizeof(player_configs[].tag_color));
-        if (player_configs[client].tag_type == ColorType_None) {
-            player_configs[client].tag_type = ColorType_Solid;
+        if (player_configs[client].tag_type == COLORTYPE_NONE || player_configs[client].tag_type & COLORTYPE_DEFAULT) {
+            player_configs[client].tag_type = COLORTYPE_SOLID;
         }
 
         GFLDM_PrintToChat(client, "%t", "Set Tag Color", player_configs[client].tag_color);
         PrintToConsole(client, "%t", "Set Tag Color Console", player_configs[client].tag_color);
+    }
+}
+
+public void Callback_SetChatColor(GFLDMWebApi _api, JSON response, any data) {
+    int client = data;
+    if (GFLDM_IsValidClient(client)) {
+
+        response.GetString("chat_color", player_configs[client].chat_color, sizeof(player_configs[].chat_color));
+        if (player_configs[client].chat_type == COLORTYPE_NONE || player_configs[client].chat_type & COLORTYPE_DEFAULT) {
+            player_configs[client].chat_type = COLORTYPE_SOLID;
+        }
+
+        GFLDM_PrintToChat(client, "%t", "Set Chat Color", player_configs[client].chat_color);
+        PrintToConsole(client, "%t", "Set Chat Color Console", player_configs[client].chat_color);
     }
 }
 
@@ -206,12 +392,20 @@ public void Callback_TagsLoaded(GFLDMWebApi _api, JSON response, any data) {
     int client = data;
     if (!IsFakeClient(client)) {
         PlayerTagConfig config;
-        response.GetString("tag", config.tag, sizeof(config.tag));
+        
+        if (CanCustomizeTag(client)) {
+            response.GetString("custom_tag", config.tag, sizeof(config.tag));
+        }
+        if (strlen(config.tag) == 0) {
+            response.GetString("tag", config.tag, sizeof(config.tag));
+        }
+        
         if (CanCustomizeTag(client)) {
             response.GetString("tag_color", config.tag_color, sizeof(config.tag_color));
         }
         if (strlen(config.tag_color) == 0) {
             response.GetString("default_tag_color", config.tag_color, sizeof(config.tag_color));
+            config.tag_type = COLORTYPE_DEFAULT;
         }
 
         if (CanCustomizeTag(client)) {
@@ -219,6 +413,7 @@ public void Callback_TagsLoaded(GFLDMWebApi _api, JSON response, any data) {
         }
         if (strlen(config.name_color) == 0) {
             response.GetString("default_name_color", config.name_color, sizeof(config.name_color));
+            config.chat_type = COLORTYPE_DEFAULT;
         }
 
         if (CanCustomizeTag(client)) {
@@ -226,6 +421,7 @@ public void Callback_TagsLoaded(GFLDMWebApi _api, JSON response, any data) {
         }
         if (strlen(config.chat_color) == 0) {
             response.GetString("default_chat_color", config.chat_color, sizeof(config.chat_color));
+            config.name_type = COLORTYPE_DEFAULT;
         }
 
         if (CanCustomizeTag(client)) {
@@ -233,18 +429,19 @@ public void Callback_TagsLoaded(GFLDMWebApi _api, JSON response, any data) {
         }
         if (strlen(config.tag_pattern) == 0) {
             response.GetString("default_tag_pattern", config.tag_pattern, sizeof(config.tag_pattern));
+            config.tag_type = COLORTYPE_DEFAULT;
         }
 
         if (strlen(config.tag) > 0) {
             if (strlen(config.tag_pattern) > 0) {
-                config.tag_type = ColorType_Pattern;
+                config.tag_type = config.tag_type | COLORTYPE_PATTERN;
             } else if (strlen(config.tag_color) > 0) {
-                config.tag_type = ColorType_Solid;
+                config.tag_type = config.tag_type | COLORTYPE_SOLID;
             }
         }
 
         if (strlen(config.name_color) > 0) {
-            config.name_type = ColorType_Solid;
+            config.name_type = config.name_type | COLORTYPE_SOLID;
         }
 
         player_configs[client] = config;
@@ -256,24 +453,24 @@ bool CanCustomizeTag(int client) {
 }
 
 public Action GFLDM_OnChatMessage(int author, char[] name, int name_max, char[] msg_body, int body_max) {
-    if (player_configs[author].name_type == ColorType_Solid) {
+    if (player_configs[author].name_type & COLORTYPE_SOLID) {
         Format(name, name_max, "\x07%s%s", player_configs[author].name_color, name);
-    } else if (player_configs[author].name_type == ColorType_Pattern) {
+    } else if (player_configs[author].name_type & COLORTYPE_PATTERN) {
         Colorize(name, name_max, player_configs[author].name_pattern, name);
     } else {
         Format(name, name_max, "{teamcolor[1]}%s", name);
     }
 
-    if (player_configs[author].chat_type == ColorType_Solid) {
+    if (player_configs[author].chat_type & COLORTYPE_SOLID) {
         Format(msg_body, body_max, "\x07%s%s", player_configs[author].chat_color, msg_body);
-    } else if (player_configs[author].chat_type == ColorType_Pattern) {
+    } else if (player_configs[author].chat_type & COLORTYPE_PATTERN) {
         Colorize(msg_body, body_max, player_configs[author].chat_pattern, msg_body);
     }
 
     if (strlen(player_configs[author].tag) > 0) {
-        if (player_configs[author].tag_type == ColorType_Solid) {
+        if (player_configs[author].tag_type & COLORTYPE_SOLID) {
             Format(name, name_max, "\x07%s%s %s", player_configs[author].tag_color, player_configs[author].tag, name);
-        } else if (player_configs[author].tag_type == ColorType_Pattern) {
+        } else if (player_configs[author].tag_type & COLORTYPE_PATTERN) {
             char tag_buffer[128];
             Colorize(tag_buffer, sizeof(tag_buffer), player_configs[author].tag_pattern, player_configs[author].tag);
             Format(name, name_max, "%s %s", tag_buffer, name);
