@@ -36,6 +36,12 @@ enum struct PlayerTagConfig {
 
 PlayerTagConfig player_configs[MAXPLAYERS + 1];
 
+ConVar cvar_server_id;
+ConVar cvar_api_key;
+ConVar cvar_websocket_url;
+ConVar cvar_custom_tag_flags;
+int custom_tag_flags_required;
+
 public void OnPluginStart() {
     RegConsoleCmd("sm_namecolor", ConCmd_NameColor, "Set your name color in hexidecimal format, i.e ff22e2");
     RegConsoleCmd("sm_tagcolor", ConCmd_TagColor, "Set your tag color in hexidecimal format, i.e ff22e2");
@@ -43,9 +49,54 @@ public void OnPluginStart() {
     RegConsoleCmd("sm_resettag", ConCmd_ResetTag, "Reset your tag customizations");
     RegConsoleCmd("sm_disabletag", ConCmd_DisableTag, "Disable your tag");
     RegConsoleCmd("sm_tags", ConCmd_Tags, "Adjust tag settings");
-    api = new GFLDMWebApi("ws://localhost:4000/api/servers/socket/websocket", "api_key_123", "tags:1");
-    api.SetConnectCallback(Callback_ChannelConnected);
+    RegConsoleCmd("sm_tag", ConCmd_Tag, "Set your custom chat tag");
+
+    cvar_server_id = CreateConVar("gfldm_tags_server_id", "-1", "Server ID for this server in GFLDM Web");
+    cvar_api_key = CreateConVar("gfldm_tags_api_key", "apikey", "Server ID for this server in GFLDM Web");
+    cvar_websocket_url = CreateConVar("gfldm_tags_websock_url", "ws://localhost:4000/api/servers/socket/websocket", "Tags websocket URL");
+    cvar_server_id.AddChangeHook(ConnectionVarChanged);
+    cvar_api_key.AddChangeHook(ConnectionVarChanged);
+    cvar_websocket_url.AddChangeHook(ConnectionVarChanged);
+
+    cvar_custom_tag_flags = CreateConVar("gfldm_tags_custom_flag", "s", "Flags required to customize tags");
+    cvar_custom_tag_flags.AddChangeHook(Cvar_CustomFlagsChanged);
+    AutoExecConfig();
     LoadTranslations("gfldm_tags.phrases");
+}
+
+public void OnConfigsExecuted() {
+    Cvar_CustomFlagsChanged(cvar_custom_tag_flags, "", "");
+    if (api == null) {
+        int server_id = cvar_server_id.IntValue;
+        if (server_id > 0) {
+            char websocket_url[512];
+            char api_key[256];
+            char topic[64];
+            Format(topic, sizeof(topic), "tags:%d", server_id);
+            cvar_websocket_url.GetString(websocket_url, sizeof(websocket_url));
+            cvar_api_key.GetString(api_key, sizeof(api_key));
+            
+            api = new GFLDMWebApi(websocket_url, api_key, topic);
+            api.SetConnectCallback(Callback_ChannelConnected);
+        }
+    }
+}
+
+public void ConnectionVarChanged(ConVar cvar, const char[] old_value, const char[] new_value) {
+    if (!StrEqual(old_value, new_value)) {
+        if (api != null) {
+            api.Close();
+            api = null;
+        }
+
+        OnConfigsExecuted();
+    }
+}
+
+public void Cvar_CustomFlagsChanged(ConVar cvar, const char[] old_value, const char[] new_value) {
+    char flagString[64];
+    cvar_custom_tag_flags.GetString(flagString, sizeof(flagString));
+    custom_tag_flags_required = ReadFlagString(flagString);
 }
 
 public Action ConCmd_Tags(int client, int args) {
@@ -87,10 +138,35 @@ public Action ConCmd_DisableTag(int client, int args) {
     delete payload;
 
     return Plugin_Handled;
+
+}
+
+public Action ConCmd_Tag(int client, int args) {
+    if (!CanCustomizeTag(client)) {
+        return Plugin_Handled;
+    }
+
+    if (args < 1) {
+        Usage_Tag(client);
+        return Plugin_Handled;
+    }
+    char steam_id[32];
+    if (!GetClientAuthId(client, AuthId_Steam3, steam_id, sizeof(steam_id))) {
+        return Plugin_Handled;
+    }
+
+    char buffer[128];
+    GetCmdArgString(buffer, sizeof(buffer));
+    JSON payload = new JSON();
+    payload.SetString("steamid", steam_id);
+    payload.SetString("custom_tag", buffer);
+    api.Call("set_custom_tag", payload, Callback_CustomTag, client);
+
+    return Plugin_Handled;
 }
 
 public Action ConCmd_NameColor(int client, int args) {
-    if (!GFLDM_IsValidClient(client)) {
+    if (!CanCustomizeTag(client)) {
         return Plugin_Handled;
     }
 
@@ -120,7 +196,7 @@ public Action ConCmd_NameColor(int client, int args) {
 }
 
 public Action ConCmd_TagColor(int client, int args) {
-    if (!GFLDM_IsValidClient(client)) {
+    if (!CanCustomizeTag(client)) {
         return Plugin_Handled;
     }
 
@@ -150,7 +226,7 @@ public Action ConCmd_TagColor(int client, int args) {
 }
 
 public Action ConCmd_ChatColor(int client, int args) {
-    if (!GFLDM_IsValidClient(client)) {
+    if (!CanCustomizeTag(client)) {
         return Plugin_Handled;
     }
 
@@ -177,6 +253,14 @@ public Action ConCmd_ChatColor(int client, int args) {
     delete payload;
 
     return Plugin_Handled;
+}
+
+void Usage_Tag(int client) {
+    if (GetCmdReplySource() == SM_REPLY_TO_CHAT) {
+        ReplyToCommand(client, "[!tags] \"!tag <tag>\"");
+    } else {
+        ReplyToCommand(client, "\"sm_tag <tag>\"");
+    }
 }
 
 void Usage_NameColor(int client) {
@@ -276,25 +360,38 @@ public int Menu_PickTag(Menu menu, MenuAction action, int param1, int param2) {
     }
 }
 
-public void Callback_SetTag(GFLDMWebApi _api, JSON response, any data) {
+public void Callback_CustomTag(GFLDMWebApi _api, const char[] status, JSON response, any data) {
+    int client = data;
+    if (GFLDM_IsValidClient(client)) {
+        if (StrEqual(status, "ok")) {
+            GFLDM_PrintToChat(client, "%t", "Tag Changed");
+            PrintToConsole(client, "%t", "Tag Changed Console");
+            response.GetString("custom_tag", player_configs[client].tag, sizeof(player_configs[].tag));
+        } else {
+            GFLDM_PrintToChat(client, "%t", "Invalid Tag");
+        }
+    }
+}
+
+public void Callback_SetTag(GFLDMWebApi _api, const char[] status, JSON response, any data) {
     int client = data;
     if (GFLDM_IsValidClient(client)) {
         GFLDM_PrintToChat(client, "%t", "Tag Changed");
         PrintToConsole(client, "%t", "Tag Changed Console");
-        Callback_TagsLoaded(_api, response, data);
+        Callback_TagsLoaded(_api, status, response, data);
     }
 }
 
-public void Callback_ResetTag(GFLDMWebApi _api, JSON response, any data) {
+public void Callback_ResetTag(GFLDMWebApi _api, const char[] status, JSON response, any data) {
     int client = data;
     if (GFLDM_IsValidClient(client)) {
         GFLDM_PrintToChat(client, "%t", "Reset Tag");
         PrintToConsole(client, "%t", "Reset Tag Console");
-        Callback_TagsLoaded(_api, response, data);
+        Callback_TagsLoaded(_api, status, response, data);
     }
 }
 
-public void Callback_PickTag(GFLDMWebApi _api, JSON response, any data) {
+public void Callback_PickTag(GFLDMWebApi _api, const char[] status, JSON response, any data) {
     int client = data;
     if (!GFLDM_IsValidClient(client)) {
         return;
@@ -312,7 +409,7 @@ public void Callback_PickTag(GFLDMWebApi _api, JSON response, any data) {
     menu.Display(client, MENU_TIME_FOREVER);
 }
 
-public void Callback_DisableTag(GFLDMWebApi _api, JSON response, any data) {
+public void Callback_DisableTag(GFLDMWebApi _api, const char[] status, JSON response, any data) {
     int client = data;
     if (GFLDM_IsValidClient(client)) {
         GFLDM_PrintToChat(client, "%t", "Disable Tag");
@@ -322,7 +419,7 @@ public void Callback_DisableTag(GFLDMWebApi _api, JSON response, any data) {
     }
 }
 
-public void Callback_SetNameColor(GFLDMWebApi _api, JSON response, any data) {
+public void Callback_SetNameColor(GFLDMWebApi _api, const char[] status, JSON response, any data) {
     int client = data;
     if (GFLDM_IsValidClient(client)) {
 
@@ -336,7 +433,7 @@ public void Callback_SetNameColor(GFLDMWebApi _api, JSON response, any data) {
     }
 }
 
-public void Callback_SetTagColor(GFLDMWebApi _api, JSON response, any data) {
+public void Callback_SetTagColor(GFLDMWebApi _api, const char[] status, JSON response, any data) {
     int client = data;
     if (GFLDM_IsValidClient(client)) {
 
@@ -350,7 +447,7 @@ public void Callback_SetTagColor(GFLDMWebApi _api, JSON response, any data) {
     }
 }
 
-public void Callback_SetChatColor(GFLDMWebApi _api, JSON response, any data) {
+public void Callback_SetChatColor(GFLDMWebApi _api, const char[] status, JSON response, any data) {
     int client = data;
     if (GFLDM_IsValidClient(client)) {
 
@@ -394,9 +491,9 @@ public void Callback_ChannelConnected(GFLDMWebApi _api, any data) {
     InitClientState();
 }
 
-public void Callback_TagsLoaded(GFLDMWebApi _api, JSON response, any data) {
+public void Callback_TagsLoaded(GFLDMWebApi _api, const char[] status, JSON response, any data) {
     int client = data;
-    if (!IsFakeClient(client)) {
+    if (!IsFakeClient(client) && StrEqual(status, "ok")) {
         PlayerTagConfig config;
         
         if (CanCustomizeTag(client)) {
@@ -459,6 +556,10 @@ public void Callback_TagsLoaded(GFLDMWebApi _api, JSON response, any data) {
 }
 
 bool CanCustomizeTag(int client) {
+    AdminId admin = GetUserAdmin(client);
+    if (admin == INVALID_ADMIN_ID || !CheckAccess(admin, "", custom_tag_flags_required, true)) {
+        return false;
+    }
     return true;
 }
 

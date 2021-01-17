@@ -66,6 +66,27 @@ defmodule GfldmWebWeb.ServerTagsChannel do
     end
   end
 
+  def handle_in("set_custom_tag", %{"steamid" => steamid, "custom_tag" => custom_tag}, socket) do
+    custom_tag = String.trim(custom_tag)
+    cond do
+      not GfldmWeb.Tags.valid_custom_tag?(custom_tag) ->
+        {:reply, :invalid_tag, socket}
+      true ->
+        case GfldmWeb.Tags.load_player_tag_config(steamid, socket.assigns[:server_id]) do
+          nil ->
+            {:ok, player} = GfldmWeb.Players.create_player(%{steamid: steamid, server_id: socket.assigns[:server_id]})
+            {:ok, _} = GfldmWeb.Tags.create_player_tag(%{player_id: player.id, custom_tag: custom_tag})
+            {:reply, {:ok, %{custom_tag: custom_tag}}, socket}
+          %GfldmWeb.Players.Player{tag: nil} = player ->
+            {:ok, _} = GfldmWeb.Tags.create_player_tag(%{player_id: player.id, custom_tag: custom_tag})
+            {:reply, {:ok, %{custom_tag: custom_tag}}, socket}
+          %GfldmWeb.Players.Player{tag: tag} ->
+            {:ok, _} = GfldmWeb.Tags.update_player_tag(tag, %{custom_tag: custom_tag})
+            {:reply, {:ok, %{custom_tag: custom_tag}}, socket}
+        end
+    end
+  end
+
   def handle_in("set_name_color", %{"steamid" => steamid, "name_color" => color}, socket) do
     case GfldmWeb.Tags.load_player_tag_config(steamid, socket.assigns[:server_id]) do
       nil ->

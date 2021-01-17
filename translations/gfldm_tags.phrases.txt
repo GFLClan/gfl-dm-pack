@@ -38,32 +38,37 @@
 
     "Reset Tag"
     {
-        "en"            "{normal}[{green}!tags{normal}] You tag has been reset"
+        "en"            "{normal}[{green}!tags{normal}] Your tag has been reset"
     }
 
     "Reset Tag Console"
     {
-        "en"            "You tag has been reset"
+        "en"            "Your tag has been reset"
     }
 
     "Disable Tag"
     {
-        "en"            "{normal}[{green}!tags{normal}] You tag has been disabled"
+        "en"            "{normal}[{green}!tags{normal}] Your tag has been disabled"
     }
 
     "Disable Tag Console"
     {
-        "en"            "You tag has been disabled"
+        "en"            "Your tag has been disabled"
     }
 
     "Tag Changed"
     {
-        "en"            "{normal}[{green}!tags{normal}] You tag has been updated"
+        "en"            "{normal}[{green}!tags{normal}] Your tag has been updated"
     }
 
     "Tag Changed Console"
     {
-        "en"            "You tag has been updated"
+        "en"            "Your tag has been updated"
+    }
+
+    "Invalid Tag"
+    {
+        "en"            "{normal}[{green}!tags{normal}] That tag is invalid"
     }
 
     "Menu Change Tag"

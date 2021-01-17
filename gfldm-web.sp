@@ -187,11 +187,14 @@ public void Read_Callback(WebSocket ws, JSON response, any data) {
                     Function callback = pack.ReadFunction();
                     any pack_data = pack.ReadCell();
                     delete pack;
+                    char status[32];
                     JSON payload = response.GetJSON("payload");
+                    payload.GetString("status", status, sizeof(status));
                     JSON phx_resp = payload.GetJSON("response");
 
                     Call_StartFunction(plugin, callback);
                     Call_PushCell(self);
+                    Call_PushString(status);
                     Call_PushCell(phx_resp);
                     Call_PushCell(pack_data);
                     Call_Finish();

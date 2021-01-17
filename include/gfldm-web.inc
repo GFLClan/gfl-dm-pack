@@ -20,7 +20,7 @@
 #endif
 #define _gfldm_web_included
 
-typedef GFLDMWebCall = function void (GFLDMWebApi api, JSON response, any data);
+typedef GFLDMWebCall = function void (GFLDMWebApi api, const char[] status, JSON response, any data);
 typedef GFLDMWebConnected = function void (GFLDMWebApi api, any data);
 
 methodmap GFLDMWebApi < Handle {

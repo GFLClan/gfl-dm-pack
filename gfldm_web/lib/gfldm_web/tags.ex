@@ -315,4 +315,7 @@ defmodule GfldmWeb.Tags do
     |> GfldmWeb.Tags.TagOverride.changeset(attrs)
     |> Repo.insert()
   end
+
+  def valid_custom_tag?(custom_tag), do:
+    Enum.count(Repo.all(from t in Tag, where: fragment("lower(?)", t.tag) == fragment("lower(?)", ^custom_tag))) == 0
 end

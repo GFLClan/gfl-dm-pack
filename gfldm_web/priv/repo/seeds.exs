@@ -17,6 +17,3 @@ use Bitwise
 {:ok, tag} = GfldmWeb.Tags.create_tag(%{name: "Dreae", tag: "Dr.eae", default_pattern: pattern.id})
 {:ok, _} = GfldmWeb.Tags.create_tag_override(%{player_id: player.id, tag_id: tag.id})
 {:ok, _} = GfldmWeb.Tags.create_player_tag(%{player_id: player.id, tag_id: tag.id})
-{:ok, _} = GfldmWeb.Tags.create_tag(%{name: "Admin", tag: "Admin", admin_flags: 1 <<< 1, default_tag_color: "4d7455"})
-{:ok, _} = GfldmWeb.Tags.create_tag(%{name: "Super Admin", tag: "Super Admin", admin_flags: 1 <<< 6, default_tag_color: "b22222", default_name_color: "ffd700"})
-{:ok, _} = GfldmWeb.Tags.create_tag(%{name: "Root", tag: "Root", admin_flags: 1 <<< 14, default_tag_color: "00bfff", default_name_color: "9932cc", default_chat_color: "f8f8ff"})
