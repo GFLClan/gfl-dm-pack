@@ -96,7 +96,7 @@ use Bitwise
 {:ok, pattern} = GfldmWeb.Tags.create_tag_pattern(
   %{
     name: "Scout Elite",
-    pattern: "%0.1;e7e7e7;%0.2;acb4d7;%0.4;485696;%0.2;acb4d7;%0.1;e7e7e7"
+    pattern: "pattern_wings;d64045;5887ff;a682ff;5887ff;d64045"
   }
 )
 {:ok, _} = GfldmWeb.Tags.create_tag(

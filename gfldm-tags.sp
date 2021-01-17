@@ -594,35 +594,67 @@ public Action GFLDM_OnChatMessage(int author, char[] name, int name_max, char[] 
 }
 
 void Colorize(char[] buffer, int max_len, const char[] pattern, const char[] str) {
-    char pattern_buffers[12][12];
-    int pattern_len = ExplodeString(pattern, ";", pattern_buffers, 12, 12);
+    char pattern_buffers[12][24];
+    int pattern_len = ExplodeString(pattern, ";", pattern_buffers, sizeof(pattern_buffers), sizeof(pattern_buffers[]));
     if (pattern_len < 1) {
         return;
     }
 
     int src_len = strlen(str);
-    int part_size = RoundToCeil(float(src_len) / float(pattern_len));
-    char buffers[24][128];
-    int toal_buffers = pattern_len * 2;
-    int total_copied = 0;
-    int j = 0;
-    for (int c = 0; c < toal_buffers; c += 2) {
-        if (total_copied >= src_len) {
-            break;
+    int num_parts = pattern_len;
+    int part_len[12];
+    int pattern_offset = 0;
+
+    if (StrEqual(pattern_buffers[0], "pattern_wings")) {
+        if ((pattern_len - 1) % 2 != 1) {
+            LogError("Wings pattern requires an odd number of colors");
+            return;
         }
 
-        Format(buffers[c], 128, "\x07%s", pattern_buffers[j]);
-        j++;
-        if (total_copied + part_size > src_len) {
-            part_size = src_len - total_copied;
+        num_parts -= 1;
+        if (num_parts < 3) {
+            LogError("Wings pattern requires at least 3 colors");
+            return;
         }
+        pattern_offset = 1;
+        int remainder = src_len;
+        int mid_point = RoundToFloor(float(num_parts) / 2.0);
+        for (int c = 0; c < num_parts; c++) {
+            if (c == mid_point) {
+                continue;
+            }
 
-        for (int i = 0; i < part_size; i++) {
-            buffers[c + 1][i] = str[total_copied + i];
+            part_len[c] = 1 + (c % mid_point);
+            remainder -= part_len[c];
         }
-        buffers[c + 1][part_size] = '\0';
-        total_copied += part_size;
+        part_len[mid_point] = remainder;
+    } else {
+        int remainder = src_len % pattern_len;
+        int avg_part_size = RoundToNearest(float(src_len - remainder) / float(num_parts));
+        for (int c = 0; c < num_parts; c++) {
+            part_len[c] = avg_part_size;
+            if (remainder > 0) {
+                part_len[c]++;
+                remainder--;
+            }
+        }
     }
 
-    ImplodeStrings(buffers, toal_buffers, "", buffer, max_len);
+    char buffers[24][64];
+    int total_copied = 0;
+    int total_buffers = num_parts * 2;
+    int j = 0;
+    for (int c = 0; c < total_buffers; c += 2) {
+        Format(buffers[c], sizeof(buffers[]), "\x07%s", pattern_buffers[pattern_offset]);
+        pattern_offset++;
+
+        for (int i = 0; i < part_len[j]; i++) {
+            buffers[c + 1][i] = str[total_copied + i];
+        }
+        buffers[c + 1][part_len[j]] = '\0';
+        total_copied += part_len[j];
+        j++;
+    }
+
+    ImplodeStrings(buffers, total_buffers, "", buffer, max_len);
 }
