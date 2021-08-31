@@ -45,6 +45,8 @@ enum struct SpecialChain {
     float last_stat_time;
     int stat_count;
     // spcomp pls
+    // spcomp does not allow 2d arrays inside an enum struct,
+    // which is also an array
     float victim_pos_x[6];
     float victim_pos_y[6];
     float victim_pos_z[6];
@@ -109,11 +111,13 @@ public void OnPluginStart() {
     GFLDM_DefineVersion("gfldm_quakesounds_version");
 
     stats_forward = CreateForward(ET_Hook, Param_Cell);
-    stats_forward.AddFunction(INVALID_HANDLE, Stats_PlayScoutElite);
-    stats_forward.AddFunction(INVALID_HANDLE, Stats_PlayAWPElite);
-    stats_forward.AddFunction(INVALID_HANDLE, Stats_PlayScoutAce);
-    stats_forward.AddFunction(INVALID_HANDLE, Stats_PlayAWPAce);
-    stats_forward.AddFunction(INVALID_HANDLE, Stats_PlayDeagSpree);
+    stats_forward.AddFunction(INVALID_HANDLE, Stats_ScoutElite);
+    stats_forward.AddFunction(INVALID_HANDLE, Stats_AWPElite);
+    stats_forward.AddFunction(INVALID_HANDLE, Stats_ScoutAce);
+    stats_forward.AddFunction(INVALID_HANDLE, Stats_AWPAce);
+    stats_forward.AddFunction(INVALID_HANDLE, Stats_DeagSpree);
+    stats_forward.AddFunction(INVALID_HANDLE, Stats_Headhunter);
+    stats_forward.AddFunction(INVALID_HANDLE, Stats_Hattrick);
 
     quake_forward = CreateForward(ET_Hook, Param_Cell, Param_Array, Param_Cell, Param_Array, Param_Cell, Param_Array, Param_Cell);
     quake_forward.AddFunction(INVALID_HANDLE, Announce_ScoutElite);
@@ -470,7 +474,7 @@ Action Timer_UpdateHudHint(Handle timer, any data) {
     }
 }
 
-Action Stats_PlayScoutElite(int client) {
+Action Stats_ScoutElite(int client) {
     if (player_chain_states[client].rapid_scout_osok.stat_count == SCOUT_ELITE_KREQ) {
         PlayAnim_ScoutElite(client);
         player_chain_states[client].rapid_scout_osok.stat_count = 0;
@@ -483,7 +487,7 @@ Action Stats_PlayScoutElite(int client) {
     return Plugin_Continue;
 }
 
-Action Stats_PlayAWPElite(int client) {
+Action Stats_AWPElite(int client) {
     if (player_chain_states[client].rapid_awp_osok.stat_count == AWP_ELITE_KREQ) {
         PlayAnim_AWPElite(client);
         player_chain_states[client].rapid_awp_osok.stat_count = 0;
@@ -496,7 +500,7 @@ Action Stats_PlayAWPElite(int client) {
     return Plugin_Continue;
 }
 
-Action Stats_PlayScoutAce(int client) {
+Action Stats_ScoutAce(int client) {
     if (player_chain_states[client].scout_osok.stat_count == SCOUT_ELITE_KREQ) {
         PlayAnim_ScoutAce(client);
         player_chain_states[client].scout_osok.stat_count = 0;
@@ -507,7 +511,7 @@ Action Stats_PlayScoutAce(int client) {
     return Plugin_Continue;
 }
 
-Action Stats_PlayAWPAce(int client) {
+Action Stats_AWPAce(int client) {
     if (player_chain_states[client].awp_osok.stat_count == AWP_ELITE_KREQ) {
         PlayAnim_AWPAce(client);
         player_chain_states[client].awp_osok.stat_count = 0;
@@ -518,7 +522,7 @@ Action Stats_PlayAWPAce(int client) {
     return Plugin_Continue;
 }
 
-Action Stats_PlayDeagSpree(int client) {
+Action Stats_DeagSpree(int client) {
     if (player_chain_states[client].one_deag.stat_count == DEAG_SPREE_KREQ) {
         PlayAnim_DeagSpree(client);
         player_chain_states[client].one_deag.stat_count = 0;
