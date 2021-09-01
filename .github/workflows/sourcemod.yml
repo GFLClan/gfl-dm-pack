@@ -22,7 +22,7 @@ jobs:
       - name: Compile 
         run: |
           mkdir compiled
-          make CC=spcomp64 
+          make CC=spcomp64 all
       - name: Bundle
         run: |
           mkdir -p bundle/addons/sourcemod/plugins
