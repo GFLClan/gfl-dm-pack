@@ -1,8 +1,9 @@
 name: Compile & Upload
 on:
   push:
-    branches: main
-  workflow_dispatch:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   build:
