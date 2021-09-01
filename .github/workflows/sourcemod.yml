@@ -33,6 +33,7 @@ jobs:
           cp -r configs/ bundle/addons/sourcemod
           cp -r scripting/ bundle/addons/sourcemod
           cp -r translations/ bundle/addons/sourcemod
+          cp -r sound/ bundle
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
