@@ -1,0 +1,39 @@
+name: Compile & Upload
+on:
+  push:
+    branches: main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        SM_VERSION: ["1.10", "1.11"]
+        
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup SourcePawn Compiler ${{ matrix.SM_VERSION }}
+        uses: rumblefrog/setup-sp@master
+        with:
+          version: ${{ matrix.SM_VERSION }}
+      - name: Compile 
+        run: |
+          mkdir compiled
+          make CC=spcomp64 
+      - name: Bundle
+        run: |
+          mkdir -p bundle/addons/sourcemod/plugins
+          cp compiled/*.smx bundle/addons/sourcemod/plugins
+          mkdir scripting
+          cp -r include/ scripting
+          cp *.sp scripting/
+          cp -r configs/ bundle/addons/sourcemod
+          cp -r scripting/ bundle/addons/sourcemod
+          cp -r translations/ bundle/addons/sourcemod
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: gfl-dm-pack
+          path: ./bundle
