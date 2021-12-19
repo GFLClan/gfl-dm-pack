@@ -1,0 +1,30 @@
+"Phrases"
+{
+    "Headshot noscoped"
+    {
+        "#format"       "{1:N},{2:N},{3:.2f}"
+        "da"            "{normal}[{green}!noscopes{normal}] {teamcolor[1]}{1} {normal}noscoped {teamcolor[2]}{2} {normal}[{green}HS{normal}] fra {green}{3}m {normal}væk."
+    }
+
+    "Noscoped"
+    {
+        "#format"       "{1:N},{2:N},{3:.2f}"
+        "da"            "{normal}[{green}!noscopes{normal}] {teamcolor[1]}{1} {normal}noscoped {teamcolor[2]}{2} {normal}fra {green}{3}m {normal}væk."
+    }
+
+    "Total noscopes"
+    {
+        "#format"       "{1:N},{2:d},{3:d}"
+        "da"            "{normal}[{green}!noscopes{normal}] {teamcolor[1]}{1} {normal}har {green}{2} {normal}noscopes [{green}{3} HS{normal}]"
+    }
+
+    "Noscopes enabled"
+    {
+        "da"            "{normal}[{green}!noscopes{normal}] NoScope notifikationer {green}tændt{normal}."
+    }
+    
+    "Noscopes disabled"
+    {
+        "da"            "{normal}[{green}!noscopes{normal}] NoScope notifikationer {green}slukket{normal}."
+    }
+}

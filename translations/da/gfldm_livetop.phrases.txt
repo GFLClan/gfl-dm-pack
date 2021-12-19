@@ -1,0 +1,37 @@
+"Phrases"
+{
+    "Highest Accuracy"
+    {
+        "da"                "Højeste Nøjagtighed"
+    }
+
+    "Most Headshots"
+    {
+        "da"                "Flest Hovedskud"
+    }
+
+    "Most Noscopes"
+    {
+        "da"                "Flest Noscopes"
+    }
+
+    "Highest KDR"
+    {
+        "da"                "Højeste KDR"
+    }
+
+    "Highest Streak"
+    {
+        "da"                "Højeste Stime"
+    }
+
+    "Livestats enabled"
+    {
+        "da"                "{normal}[{green}LiveStats{normal}] LiveStats tændt."
+    }
+
+    "Livestats disabled"
+    {
+        "da"                "{normal}[{green}LiveStats{normal}] LiveStats slukket."
+    }
+}

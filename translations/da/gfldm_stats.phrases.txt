@@ -1,0 +1,7 @@
+"Phrases"
+{
+    "Stats Reset"
+    {
+        "da"            "{normal}[{green}!rs{normal}] Din score er blevet nulstillet."
+    }
+}

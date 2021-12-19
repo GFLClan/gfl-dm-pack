@@ -1,0 +1,12 @@
+"Phrases"
+{
+    "Switched CT"
+    {
+        "da"                "{normal}[{green}Teambalance{normal}] Du er blevet flyttet til {team_ct}CT {normal}for at balancere holdende."
+    }
+
+    "Switched T"
+    {
+        "da"                "{normal}[{green}Teambalance{normal}] Du er blevet flyttet til {team_t}T {normal}for at balancere holdende."
+    }
+}

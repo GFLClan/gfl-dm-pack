@@ -1,0 +1,12 @@
+"Phrases"
+{
+    "HS explosions enabled"
+    {
+        "da"                "{normal}[{green}HSExplode{normal}] Eksplosion ved hovedskud tændt."
+    }
+
+   "HS explosions disabled"
+   {
+       "da"                 "{normal}[{green}HSExplode{normal}] Eksplosion ved hovedskud slukket."
+   } 
+}

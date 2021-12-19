@@ -1,0 +1,8 @@
+"Phrases"
+{
+    "Map Restarting in..."
+    {
+        "#format"       "{1:d}"
+        "da"            "{normal}[{green}GLFDM{normal}] Banen genstarter om {team_ct}{1} {normal}sekunder..."
+    }
+}
