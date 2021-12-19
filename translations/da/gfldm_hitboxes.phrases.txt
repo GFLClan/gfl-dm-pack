@@ -1,0 +1,37 @@
+"Phrases"
+{
+    "Head"
+    {
+        "da"                "Hoved"
+    }
+
+    "Chest"
+    {
+        "da"                "Overkrop"
+    }
+    
+    "Stomach"
+    {
+        "da"                "Mave"
+    }
+    
+    "Left Arm"
+    {
+        "da"                "Venstre Arm"
+    }
+    
+    "Right Arm"
+    {
+        "da"                "Højre Arm"
+    }
+    
+    "Left Leg"
+    {
+        "da"                "Venstre Ben"
+    }
+    
+    "Right Leg"
+    {
+        "da"                "Højre Ben"
+    }
+}

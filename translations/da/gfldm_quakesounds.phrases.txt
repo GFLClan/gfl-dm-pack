@@ -1,0 +1,102 @@
+"Phrases"
+{
+    "Kill Streak"
+    {
+        "#format"       "{1:N},{2:d}"
+        "da"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {normal}er på en {green}{2} {normal}kill streak."
+    }
+
+    "Kill Chain"
+    {
+        "#format"       "{1:N},{2:d}"
+        "da"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {green}{2} {normal}kill chain!"
+    }
+
+    "Headhunter"
+    {
+        "#format"       "{1:N}"
+        "da"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {normal}er en {green}Headhunter"
+    }
+
+    "Hattrick"
+    {
+        "#format"       "{1:N}"
+        "da"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {green}Hattrick"
+    }
+
+    "Announce Scout Elite"
+    {
+        "#format"       "{1:N}"
+        "da"            "{normal}[{green}!quake{normal}] For vildt! {teamcolor[1]}{1} {normal}er en {green}Scout Elite"
+    }
+    
+    "Announce Awp Elite"
+    {
+        "#format"       "{1:N}"
+        "da"            "{normal}[{green}!quake{normal}] Super sindsygt! {teamcolor[1]}{1} {normal}er en {green}AWP Elite"
+    }
+
+    "Announce Scout Ace"
+    {
+        "#format"       "{1:N}"
+        "da"            "{normal}[{green}!quake{normal}] WOW! {teamcolor[1]}{1} {normal}er en {green}Scout Ace"
+    }
+    
+    "Announce Awp Ace"
+    {
+        "#format"       "{1:N}"
+        "da"            "{normal}[{green}!quake{normal}] Ustoppelig! {teamcolor[1]}{1} {normal}er en {green}AWP Ace"
+    }
+    
+    "Collateral"
+    {
+        "#format"       "{1:N}"
+        "da"            "{normal}[{green}!quake{normal}] {teamcolor[1]}{1} {normal}fik et {green}sammenhængende drab."
+    }
+
+    "Announce Deagle Spree"
+    {
+        "#format"       "{1:N}"
+        "da"            "{normal}[{green}!quake{normal}] GO GO GO. {teamcolor[1]}{1} {normal}er på en{green}one deag {normal}spree."
+    }
+
+    "Quake enabled"
+    {
+        "da"            "{normal}[{green}!quake{normal}] Quake lyde {green}tændt{normal}."
+    }
+    
+    "Quake disabled"
+    {
+        "da"            "{normal}[{green}!quake{normal}] Quake lyde {green}slukket{normal}."
+    }
+
+    "Scout Elite"
+    {
+        "en"            "Scout Elite"
+    }
+
+    "AWP Elite"
+    {
+        "en"            "AWP Elite"
+    }
+
+    "Scout Ace"
+    {
+        "en"            "Scout Ace"
+    }
+
+    "AWP Ace"
+    {
+        "en"            "AWP Ace"
+    }
+
+    "Deagle Spree"
+    {
+        "en"            "Deagle Spree"
+    }
+
+    "One Deag"
+    {
+        "en"            "One Deag"
+    }
+}

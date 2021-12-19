@@ -3,16 +3,16 @@
     "Silenced"
     {
         "#format"           "{1:s}"
-        "en"                "{normal}[{green}!silencer{normal}] Silenced {green}{1}{normal}"
+        "da"                "{normal}[{green}!silencer{normal}] Lydløs {green}{1}{normal}"
     }
 
     "Autosilencer enabled"
     {
-        "en"                "{normal}[{green}!silencer{normal}] Your weapons {green}will be {normal}automatically silenced."
+        "da"                "{normal}[{green}!silencer{normal}] Dine våben {green}vil blive {normal}automatisk lydløse."
     }
 
    "Autosilencer disabled"
    {
-       "en"                 "{normal}[{green}!silencer{normal}] Your weapons {green}will not be {normal}automatically silenced."
+       "da"                 "{normal}[{green}!silencer{normal}] Dine våben {green}vil ikke blive{normal}automatisk lydløse."
    } 
 }
